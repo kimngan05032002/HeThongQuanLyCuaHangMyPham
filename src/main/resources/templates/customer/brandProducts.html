@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{customer/fragments/head :: head}">
+	<title>Sản phẩm theo thương hiệu</title>
+</head>
+
+<body>
+	<header th:replace="~{customer/fragments/header :: header}"></header>
+
+	<main style="padding: 200px; background-color: #f9f9f9; ">
+		<!-- Banner thương hiệu -->
+		<section class="brand-banner" style="text-align: center; margin-bottom: 30px;">
+			<img th:src="@{'/upload/' + ${brand.hinhAnh}}" alt="Hình thương hiệu"
+				style="max-width: 100%; height: auto; border-radius: 10px;">
+			<h1 class="brand-title" th:text="'Sản phẩm thương hiệu: ' + ${brand.tenThuongHieu}"
+				style="margin-top: 20px; font-size: 28px; color: #222; font-weight: bold;">
+			</h1>
+		</section>
+
+		<!-- Bộ lọc và sắp xếp -->
+		<section class="filters"
+			style="margin-bottom: 20px; padding: 10px; background-color: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+			<form th:action="@{'/brands/' + ${brand.maThuongHieu}}" method="get"
+				style="display: flex; align-items: center; justify-content: space-between;">
+				<!-- Khoảng giá -->
+				<!-- Khoảng giá -->
+				<div style="display: flex; align-items: center; gap: 10px;">
+					<label style="font-weight: bold; color: #333;">KHOẢNG GIÁ:</label>
+					<!-- Thay th:value thành th:attr -->
+					<input type="number" id="minPrice" name="minPrice"
+						th:attr="value=${minPrice != null && minPrice != 0 ? minPrice : ''}" th:placeholder="'đ TỪ'"
+						style="padding: 5px; border: 1px solid #ddd; border-radius: 5px; width: 120px; text-align: center;">
+					-</span>
+					<input type="number" id="maxPrice" name="maxPrice"
+						th:attr="value=${maxPrice != null && maxPrice != 999999999 ? maxPrice : ''}"
+						th:placeholder="'đ ĐẾN'"
+						style="padding: 5px; border: 1px solid #ddd; border-radius: 5px; width: 120px; text-align: center;">
+					<button type="submit" class="btn btn-primary"
+						style="padding: 8px 15px;   border: none; border-radius: 5px;  cursor: pointer;">
+						Áp dụng
+					</button>
+				</div>
+
+
+				<!-- Sắp xếp -->
+				<div style="display: flex; align-items: center; gap: 10px;">
+					<label style="font-weight: bold; color: #333;">SẮP XẾP:</label>
+					<select id="sortOrder" name="sortOrder" th:value="${sortOrder}"
+						style="padding: 5px; border: 1px solid #ddd; border-radius: 5px; width: 180px;">
+						<option value="asc" th:selected="${sortOrder == 'asc'}">Giá thấp đến cao</option>
+						<option value="desc" th:selected="${sortOrder == 'desc'}">Giá cao đến thấp</option>
+					</select>
+					<button type="submit" class="btn btn-primary"
+						style="padding: 8px 15px;color: white; border: none; border-radius: 5px;  cursor: pointer;">
+						Lọc
+					</button>
+				</div>
+			</form>
+		</section>
+
+
+
+		<!-- Danh sách sản phẩm -->
+		<!-- Danh sách sản phẩm -->
+		<section class="product-list">
+			<div class="row" style="row-gap: 20px;">
+				<div class="col-lg-3 col-md-4 col-sm-6" th:each="product : ${products}">
+					<a th:href="@{'/product/' + ${product.maSanPham}}" style="text-decoration: none; color: inherit;">
+						<div class="product-card"
+							style="border: 1px solid #ddd; border-radius: 10px; background: white; overflow: hidden; transition: transform 0.3s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);"
+							onmouseover="this.style.borderColor='#ffc107';" onmouseout="this.style.borderColor='#ddd';">
+
+							<!-- Hình ảnh sản phẩm -->
+							<div class="product-image"
+								style="position: relative; height: 250px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+								<span th:if="${sanPhamKhuyenMaiMap[product.maSanPham] != null}"
+									th:text="'-' + ${sanPhamKhuyenMaiMap[product.maSanPham].phanTramGiamGia} + '%'"
+									style="
+							  position: absolute;
+							  top: 8px;
+							  left: 8px;
+							  background: #ff4d4f;
+							  color: white;
+							  padding: 2px 6px;
+							  font-size: 11px;
+							  border-radius: 5px;
+							  font-weight: bold;
+							  z-index: 1;">
+								</span>
+								<img th:src="@{'/upload/' + ${product.hinhAnh}}" alt="Hình sản phẩm"
+									style="width: 100%; height: 100%; object-fit: cover;">
+							</div>
+
+							<!-- Thông tin sản phẩm -->
+							<div class="product-info" style="padding: 15px;">
+								<!-- Giá sản phẩm -->
+								<div class="product-pricing"
+									style="display: flex; align-items: center; gap: 13px; justify-content: space-between;">
+									<!-- Giá sau giảm -->
+									<!-- Giá sau giảm -->
+									<div class="product-price"
+										style="font-size: 14px; font-weight: bold; color: #e74c3c;">
+										<span
+											th:text="${#numbers.formatDecimal(sanPhamGiaSauGiamMap[product.maSanPham], 0, 'COMMA', 0, 'POINT') + ' đ'}">
+										</span>
+									</div>
+
+									<div style="display: flex; align-items: center; gap: 5px;">
+										<!-- Giá cũ -->
+										<div th:if="${sanPhamKhuyenMaiMap[product.maSanPham] != null}"
+											style="font-size: 12px; color: #999; text-decoration: line-through; text-align: right;">
+											<span
+												th:text="${#numbers.formatDecimal(product.donGiaBan, 0, 'COMMA', 0, 'POINT') + ' đ'}"></span>
+										</div>
+
+
+										<!-- Phần trăm giảm giá 
+										<span th:if="${sanPhamKhuyenMaiMap[product.maSanPham] != null}"
+											th:text="'-' + ${sanPhamKhuyenMaiMap[product.maSanPham].phanTramGiamGia} + '%'"
+											style="background: #ff4d4f; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; font-weight: bold;">
+										</span>-->
+									</div>
+								</div>
+
+
+								<!-- Tên thương hiệu -->
+								<p th:text="${brand.tenThuongHieu}"
+									style="font-size: 12px; color: green; font-weight: bold; margin-bottom: 2px; text-align: left;">
+								</p>
+								<!-- Tên sản phẩm -->
+								<p class="product-title" th:text="${product.tenSanPham}"
+									style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+								</p>
+								<span class="remaining-quantity"
+									style="font-size: 12px; color: #555; display: block; margin-top: 5px;">
+									Số lượng: <span th:text="${sanPhamSoLuongTonKhoMap[product.maSanPham]}">0</span>
+									<span class="qty" th:text="${product.donViTinh.tenDonVi}">Đơn vị tính</span>
+
+								</span>
+								<!-- Thêm thông tin số lượng còn lại -->
+
+								<!-- Đánh giá -->
+								<div class="product-rating" style="color: #f1c40f; font-size: 14px; margin-top: 2px;">
+
+
+									<span th:text="${sanPhamAverageRatingMap[product.maSanPham] != null 
+                  ? #numbers.formatDecimal(sanPhamAverageRatingMap[product.maSanPham], 1, 1) + ' ★' 
+                  : 'Chưa có đánh giá'}"></span>
+
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+			</div>
+		</section>
+
+
+
+		<!-- Phân trang -->
+		<nav aria-label="Page navigation" style="margin-top: 30px;">
+			<ul class="pagination justify-content-center">
+				<li class="page-item" th:classappend="${page == 0} ? 'disabled'">
+					<a class="page-link"
+						th:href="@{'/brands/' + ${brand.maThuongHieu} + '?page=' + (${page - 1}) + '&minPrice=' + ${minPrice} + '&maxPrice=' + ${maxPrice} + '&sortOrder=' + ${sortOrder}}">Trước</a>
+				</li>
+				<li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${page == i} ? 'active'">
+					<a class="page-link"
+						th:href="@{'/brands/' + ${brand.maThuongHieu} + '?page=' + i + '&minPrice=' + ${minPrice} + '&maxPrice=' + ${maxPrice} + '&sortOrder=' + ${sortOrder}}"
+						th:text="${i + 1}">1</a>
+				</li>
+				<li class="page-item" th:classappend="${page == totalPages - 1} ? 'disabled'">
+					<a class="page-link"
+						th:href="@{'/brands/' + ${brand.maThuongHieu} + '?page=' + (${page + 1}) + '&minPrice=' + ${minPrice} + '&maxPrice=' + ${maxPrice} + '&sortOrder=' + ${sortOrder}}">Sau</a>
+				</li>
+			</ul>
+		</nav>
+
+	</main>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+	<div th:replace="customer/fragments/script :: script"></div>
+
+	<footer th:replace="~{customer/fragments/footer :: footer}"></footer>
+</body>
+
+</html>

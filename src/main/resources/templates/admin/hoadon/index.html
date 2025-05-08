@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head :: head">
+
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="admin/fragments/sidebar :: sidebar"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<!-- Header -->
+			<div th:replace="admin/fragments/header :: header"></div>
+			<!-- End Header -->
+			<div class="container" style="background-color: #fafcff;">
+				<div class="container">
+					<h2 class="mt-5">Danh Sách Hóa Đơn</h2>
+					<div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+						<span th:text="${errorMessage}"></span>
+					</div>
+
+					<table class="table table-bordered mt-4">
+						<thead class="thead-dark">
+							<tr>
+								<th style="text-align: center;">Mã Hóa Đơn</th>
+								<th style="text-align: center;">Ngày Xuất</th>
+								<th style="text-align: center;">Tổng Tiền</th>
+								<th style="text-align: center;">Người Nhận</th>
+								<th style="text-align: center;">Trạng Thái</th>
+								<th style="text-align: center;">Thao Tác</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:if="${hoaDons.isEmpty()}">
+								<td colspan="6" class="text-center text-muted">Không tìm thấy hóa đơn nào.</td>
+							</tr>
+							<tr th:each="hoaDon : ${hoaDons}">
+								<td style="text-align: center;" th:text="${hoaDon.maHoaDon}"></td>
+								<td style="text-align: center;"
+									th:text="${#temporals.format(hoaDon.ngayXuatHoaDon, 'dd/MM/yyyy HH:mm')}"></td>
+								<!--<td style="text-align: center;" th:text="${hoaDon.tongTien} + ' VND'"></td>
+							-->
+								<!--<td style="text-align: center;">
+									<span
+										th:text="${hoaDon.tongTien != null ? #numbers.formatDecimal(hoaDon.tongTien, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}"></span>
+								</td>-->
+								<td style="text-align: center;">
+									<span class="fw-bold"
+										th:text="${#numbers.formatDecimal(hoaDon.tongTien, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+									</span>
+								</td>
+
+
+
+
+
+								<td class="text-center"
+									th:text="${hoaDon.soDienThoaiNhanHang != '0000000000' ? hoaDon.donHang.nguoiDung.hoTen : 'Khách vãng lai'}">
+								</td>
+
+								<td style="text-align: center;">
+									<span
+										th:text="${hoaDon.trangThaiThanhToan == 'Chưa xác nhận' ? 'Chưa thanh toán' : 'Đã thanh toán'}"
+										th:classappend="${hoaDon.trangThaiThanhToan == 'Chưa xác nhận' ? 'text-danger' : 'text-success'}">
+									</span>
+									<i
+										th:classappend="${hoaDon.trangThaiThanhToan == 'Chưa xác nhận' ? 'fa fa-times-circle text-danger' : 'fa fa-check-circle text-success'}"></i>
+								</td>
+
+								<td style="text-align: center;">
+									<a th:href="@{'/admin/hoadon/' + ${hoaDon.donHang.maDonHang}}"
+										class="btn btn-primary">Xem Chi Tiết</a>
+								</td>
+
+
+							</tr>
+						</tbody>
+					</table>
+
+					<div class="mt-4">
+						<nav aria-label="Page navigation">
+							<ul class="pagination justify-content-center">
+								<li th:classappend="${currentPage == 0} ? 'disabled'">
+									<a th:href="@{|/admin/hoadon?page=${currentPage - 1}&size=${size}|}"
+										class="page-link">Trước</a>
+								</li>
+								<li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+									th:classappend="${currentPage == i} ? 'active'">
+									<a th:href="@{|/admin/hoadon?page=${i}&size=${size}|}" class="page-link"
+										th:text="${i + 1}">1</a>
+								</li>
+								<li th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+									<a th:href="@{|/admin/hoadon?page=${currentPage + 1}&size=${size}|}"
+										class="page-link">Sau</a>
+								</li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+			</div>
+			<!-- Footer -->
+			<div th:replace="admin/fragments/footer :: footer"></div>
+			<!-- End Footer -->
+		</div>
+	</div>
+
+	<!-- Core JS Files -->
+	<div th:replace="admin/fragments/script :: script"></div>
+	<!-- End JS -->
+</body>
+
+</html>

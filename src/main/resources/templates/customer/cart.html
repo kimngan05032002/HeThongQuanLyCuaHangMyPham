@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="customer/fragments/head :: head"></head>
+
+<body>
+	<header th:replace="customer/fragments/header :: header"></header>
+
+	<main class="container my-4" style="padding-top: 170px;">
+		<!-- Đường dẫn điều hướng -->
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item"><a href="/index" style="font-weight: bold; color: #007bff;">Trang chủ</a>
+				</li>
+				<li class="breadcrumb-item active" aria-current="page" style="color: #000;">Giỏ hàng</li>
+			</ol>
+		</nav>
+
+		<!-- Tiêu đề -->
+		<h3 class="my-4 fw-bold" style="color: #000;">Giỏ hàng (<span th:text="${cartItems.size()}"></span> sản phẩm)
+		</h3>
+
+		<!-- Kiểm tra giỏ hàng có sản phẩm không -->
+		<div th:if="${cartItems.size() > 0}">
+			<div class="row">
+				<!-- Danh sách sản phẩm -->
+				<div class="col-md-8">
+					<table class="table table-borderless align-middle">
+						<thead>
+							<tr style="background: #f8f9fa;">
+								<th scope="col" style="color: #333; font-weight: bold;">Sản phẩm</th>
+								<th scope="col" class="text-center" style="color: #333; font-weight: bold;">Giá tiền
+								</th>
+								<th scope="col" class="text-center" style="color: #333; font-weight: bold;">Số lượng
+								</th>
+								<th scope="col" class="text-center" style="color: #333; font-weight: bold;">Thành tiền
+								</th>
+							</tr>
+							<tr>
+								<td colspan="4">
+									<hr style="border-top: 3px solid #000; margin: 0;">
+								</td>
+							</tr>
+
+
+						</thead>
+
+						<tbody>
+							<tr th:each="item : ${cartItems}" style="border-bottom: 1px solid #ddd;">
+								<!-- Hình ảnh sản phẩm -->
+								<td class="d-flex align-items-center" style="max-width: 350px;">
+									<a th:href="@{'/product/' + ${item.sanPham.maSanPham}}" class="me-3">
+										<img th:src="@{'/upload/' + ${item.sanPham.hinhAnh}}" class="img-thumbnail"
+											style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ddd;">
+									</a>
+									<div
+										style="margin-left: 10px; max-width: 220px; word-wrap: break-word; white-space: normal;">
+										<h6 class="fw-bold mb-2" style="color: #000;"
+											th:text="${item.sanPham.tenSanPham}"></h6>
+
+										<form th:action="@{/customer/cart/remove}" method="POST"
+											style="display: inline;">
+											<input type="hidden" name="sanPhamId" th:value="${item.sanPham.maSanPham}">
+											<button type="submit" class="fw-bold border-0 bg-transparent"
+												style="cursor: pointer; color: #d70000; font-size: 16px; text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.3);">
+												❌ Xóa
+											</button>
+										</form>
+									</div>
+								</td>
+
+
+
+								<!-- Giá tiền -->
+								<td class="text-center">
+									<span class="fw-bold" style="color: #d70000; font-size: 14px;"
+										th:text="${sanPhamGiaSauGiamMap[item.sanPham.maSanPham] != null ? 
+        #numbers.formatDecimal(sanPhamGiaSauGiamMap[item.sanPham.maSanPham], 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}">
+									</span>
+									<br>
+									<del class="fw-bold" style="color: #000; font-size: 14px;"
+										th:if="${sanPhamKhuyenMaiMap[item.sanPham.maSanPham] != null}"
+										th:text="${#numbers.formatDecimal(item.sanPham.donGiaBan, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+									</del>
+								</td>
+
+
+								<!-- Số lượng -->
+								<td class="text-center">
+									<form th:action="@{/customer/cart/update-quantity}" method="POST"
+										class="d-flex align-items-center">
+										<input type="hidden" name="sanPhamId" th:value="${item.sanPham.maSanPham}">
+										<input type="number" name="quantity" th:value="${item.soLuong}" min="1"
+											th:max="${sanPhamSoLuongTonKhoMap[item.sanPham.maSanPham]}"
+											class="form-control text-center me-2"
+											style="width: 60px; display: inline-block; border: 2px solid #000; ">
+
+										<button type="submit" class="btn btn-info fw-bold"
+											style="background-color: #000; color: white; padding: 1px 2px; font-size: 13.5px;">
+											Tính tiền
+										</button>
+									</form>
+								</td>
+
+
+								<!-- Thành tiền -->
+								<td class="text-center fw-bold" style="color: #000; font-size: 14px;">
+									<span th:text="${sanPhamGiaSauGiamMap[item.sanPham.maSanPham] != null ? 
+        #numbers.formatDecimal(item.soLuong * sanPhamGiaSauGiamMap[item.sanPham.maSanPham], 0, 'COMMA', 0, 'POINT') + ' đ' 
+        : 'Đang cập nhật'}">
+									</span>
+								</td>
+
+							</tr>
+						</tbody>
+					</table>
+
+					<!-- Tiếp tục mua hàng -->
+					<a href="/index" class="fw-bold"
+						style="color: #28a745; text-decoration: none; transition: color 0.3s ease-in-out;"
+						onmouseover="this.style.color='#1e7e34'" onmouseout="this.style.color='#28a745'">
+						← Tiếp tục mua hàng
+					</a>
+				</div>
+
+				<!-- Hóa đơn tóm tắt -->
+				<div class="col-md-4">
+					<div class="border p-3 rounded shadow-sm" style="background: #fff; border: #000;">
+						<h5 class="fw-bold" style="color: #000;">🧾 Hóa đơn của bạn</h5>
+						<hr style="border-top: 3px solid #000; margin: 0;">
+
+						<p class="d-flex justify-content-between">
+							<span style="color: #333;">Tạm tính:</span>
+							<span class="fw-bold" style="color: #000;"
+								th:text="${totalPrice != null ? #numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}">
+							</span>
+						</p>
+
+						<p class="d-flex justify-content-between">
+							<span style="color: #333;">Giảm giá:</span>
+							<span style="color: #000;"
+								th:text="${discount != null ? '-' + discount : '- 0'} + ' đ'"></span>
+						</p>
+						<hr>
+						<h4 class="fw-bold text-danger d-flex justify-content-between">
+							<span style="color: #000;">Tổng cộng:</span>
+							<span style="color: #ff6600;"
+								th:text="${totalPrice != null ? #numbers.formatDecimal((discount != null ? totalPrice - discount : totalPrice), 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}">
+							</span>
+						</h4>
+
+						<p class="text-muted small" style="color: #000;">(Đã bao gồm VAT)</p>
+
+						<!-- Nút thanh toán -->
+						<form th:action="@{/customer/cart/checkout}" method="POST">
+							<button type="submit" class="btn btn-warning w-100 fw-bold"
+								style="background: #ff6600; border: none; font-size: 18px; color: #f8f9fa;">Tiến hành
+								đặt
+								hàng</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Hiển thị nếu giỏ hàng trống -->
+		<div th:if="${cartItems.size() == 0}" class="text-center py-5">
+			<h5 class="text-muted fw-bold" style="color: #000;">🛒 Giỏ hàng của bạn đang trống!</h5>
+			<a href="/index" class="btn btn-outline-primary mt-3 fw-bold">Quay lại mua sắm</a>
+		</div>
+	</main>
+
+	<footer th:replace="customer/fragments/footer :: footer"></footer>
+
+	<!-- JavaScript cập nhật số lượng giỏ hàng -->
+	<script>
+		function updateCartIconCount() {
+			fetch('/customer/cart/total-items')
+				.then(response => response.json())
+				.then(totalItems => {
+					const cartCountElement = document.getElementById('cart-count');
+					if (cartCountElement) {
+						cartCountElement.textContent = totalItems;
+					}
+				})
+				.catch(error => console.error("Lỗi khi cập nhật số lượng giỏ hàng: ", error));
+		}
+		document.addEventListener("DOMContentLoaded", function () {
+			updateCartIconCount();
+		});
+	</script>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

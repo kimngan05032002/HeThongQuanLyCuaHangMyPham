@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="customer/fragments/head :: head"></head>
+
+<body>
+	<header th:replace="customer/fragments/header :: header"></header>
+
+	<main class="container my-4" style="max-width: 900px; margin: auto; padding-top:150px;">
+		<h2 class="text-center" style="color: #333; font-weight: bold; margin-bottom: 20px;">Đơn hàng của tôi</h2>
+
+		<!-- Tabs trạng thái đơn hàng -->
+		<!-- Tabs trạng thái đơn hàng -->
+		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+			<a th:href="@{/customer/order(type='online')}" class="tab-btn"
+				th:classappend="${selectedType == 'online'} ? '' : 'inactive'" style="padding: 10px 20px; border-radius: 6px; font-weight: bold; border: 1px solid #007bff;
+		text-decoration: none; transition: all 0.3s ease;
+		
+		">Mua online</a>
+
+			<a th:href="@{/customer/order(type='store')}" class="tab-btn"
+				th:classappend="${selectedType == 'store'} ? '' : 'inactive'" style="padding: 10px 20px; border-radius: 6px; font-weight: bold; border: 1px solid #007bff;
+		text-decoration: none; transition: all 0.3s ease;
+		
+		">Mua tại cửa hàng</a>
+		</div>
+
+
+		<!-- Thanh menu trạng thái -->
+		<div class="order-tabs">
+			<a th:href="@{/customer/order(status='all')}" class="order-tab"
+				th:classappend="${selectedStatus == 'all'} ? 'active-tab'">
+				Tất cả
+			</a>
+			<a th:href="@{/customer/order(status='Mới đặt')}" class="order-tab"
+				th:classappend="${selectedStatus == 'Mới đặt'} ? 'active-tab'">
+				Mới đặt
+			</a>
+			<a th:href="@{/customer/order(status='Đang xử lý')}" class="order-tab"
+				th:classappend="${selectedStatus == 'Đang xử lý'} ? 'active-tab'">
+				Đang xử lý
+			</a>
+			<a th:href="@{/customer/order(status='Đã xác nhận')}" class="order-tab" th:classappend="${selectedStatus == 'Đã xác nhận'} ? 'active-tab' 
+                   ">
+				Đã xác nhận
+			</a>
+
+			<a th:href="@{/customer/order(status='Đang giao hàng')}" class="order-tab"
+				th:classappend="${selectedStatus == 'Đang giao hàng'} ? 'active-tab'">
+				Đang giao hàng
+			</a>
+			<a th:href="@{/customer/order(status='Đã hoàn thành')}" class="order-tab"
+				th:classappend="${selectedStatus == 'Đã hoàn thành'} ? 'active-tab'">
+				Thành công
+			</a>
+			<a th:href="@{/customer/order(status='Đã hủy')}" class="order-tab"
+				th:classappend="${selectedStatus == 'Đã hủy'} ? 'active-tab'">
+				Đã hủy
+			</a>
+		</div>
+
+		<!-- Danh sách đơn hàng -->
+		<div id="order-list">
+			<div th:if="${#lists.isEmpty(donHangs)}" class="no-orders">
+				<img src="https://cdn-icons-png.flaticon.com/512/743/743131.png" alt="Giỏ hàng rỗng"
+					style="width: 150px; opacity: 0.7; margin-bottom: 10px;">
+
+				<p>Bạn chưa có đơn hàng nào</p>
+				<a href="/" class="continue-shopping">Tiếp tục mua sắm</a>
+			</div>
+			<!--
+			<div th:each="order : ${donHangs}" class="order-card">
+				<h5>Đơn hàng số: <span th:text="${order.maDonHang}"></span></h5>
+				<p>Ngày đặt: <span th:text="${#temporals.format(order.ngayDat, 'dd/MM/yyyy HH:mm')}"></span></p>
+				<p>Địa chỉ giao hàng: <span th:text="${order.diaChiGiaoHang}"></span></p>
+				<p>Trạng thái: <span th:text="${order.trangThaiDonHang}"></span></p>
+				<p>Phí vận chuyển: <span th:text="${order.phiVanChuyen} + ' VND'"></span></p>
+				<p>Tổng tiền: <span th:text="${order.tongGiaTriDonHang} + ' VND'"></span></p>
+
+				<div class="order-actions">
+					<a th:href="@{/customer/order/{maDonHang}(maDonHang=${order.maDonHang})}" class="btn-view">Xem Chi
+						Tiết</a>
+
+					<form th:action="@{/customer/order/cancel}" method="POST"
+						th:if="${order.trangThaiDonHang == 'Đang xử lý'}">
+						<input type="hidden" name="maDonHang" th:value="${order.maDonHang}" />
+						<button type="submit" class="btn-cancel"
+							onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
+							Hủy Đơn Hàng
+						</button>
+					</form>
+				</div>
+			</div>
+			-->
+
+
+
+			<div th:each="order : ${donHangs}" style=" position: relative;background-color: #fff; border-radius: 10px; padding: 20px; margin-bottom: 15px; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); transition: 0.3s; border-left: 5px solid #007bff;">
+
+				<h5 style="color: #007bff; margin-bottom: 10px;">🛒 Đơn hàng số: <span
+						th:text="${order.maDonHang}"></span></h5>
+
+				<p><strong>📅 Ngày đặt:</strong>
+					<span th:text="${#temporals.format(order.ngayDat, 'dd/MM/yyyy HH:mm')}"></span>
+				</p>
+
+
+				<!--  Hiển thị trạng thái đơn hàng với màu sắc nổi bật -->
+				<p><strong>📌 Trạng thái:</strong>
+					<span th:text="${order.trangThaiDonHang}" th:style="'padding: 5px 10px; border-radius: 5px; font-weight: bold; color: white; background-color: ' + 
+                (${order.trangThaiDonHang == 'Mới đặt'} ? '#ffcc00' : 
+                (${order.trangThaiDonHang == 'Đang xử lý'} ? '#FFA500' : 
+                (${order.trangThaiDonHang == 'Đã xác nhận'} ? '#007bff' : 
+                (${order.trangThaiDonHang == 'Đang giao hàng'} ? '#17a2b8' : 
+                (${order.trangThaiDonHang == 'Đã hoàn thành'} ? '#28a745' : 
+                (${order.trangThaiDonHang == 'Đã hủy'} ? '#dc3545' : '#6c757d'))))))">
+					</span>
+					<!--  Hiển thị Icon trạng thái -->
+					<span th:switch="${order.trangThaiDonHang}">
+						<span th:case="'Mới đặt'"></span>
+						<span th:case="'Đang xử lý'"></span>
+						<span th:case="'Đã xác nhận'"></span>
+						<span th:case="'Đang giao hàng'"></span>
+						<span th:case="'Đã hoàn thành'"></span>
+						<span th:case="'Đã hủy'"></span>
+						<span th:case="*"></span> <!-- Trạng thái không xác định -->
+					</span>
+				</p>
+
+
+
+				<p th:if="${order.tongGiaTriDonHang != 0}">
+					<strong>💰 Tổng tiền:</strong>
+					<span
+						th:text="${#numbers.formatDecimal(order.tongGiaTriDonHang, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+				</p>
+
+				<p th:if="${order.tongGiaTriDonHang == 0}">
+					<strong>💰</strong> <span style="color: green; font-weight: bold;">Đã thanh toán qua VNPay</span>
+				</p>
+
+
+				<!-- 🔹 Nút hành động -->
+				<div style="display: flex; gap: 10px; margin-top: 15px;">
+					<!-- Nút xem chi tiết -->
+					<!--	<a th:href="@{/customer/order/{maDonHang}(maDonHang=${order.maDonHang})}" style="background-color: #007bff; color: white; padding: 8px 12px; border-radius: 5px; 
+                  text-decoration: none; transition: 0.3s; font-size: 14px;">
+						Xem Chi Tiết
+					</a>
+					<div th:if="${order.trangThaiDonHang == 'Đã hoàn thành' and !order.daKhachXacNhan}">
+						<form th:action="@{/customer/order/confirm-delivery}" method="post"
+							onsubmit="return confirm('🎉 Cảm ơn bạn đã xác nhận đã nhận hàng!');"
+							style="display:inline;">
+							<input type="hidden" name="maDonHang" th:value="${order.maDonHang}" />
+							<button type="submit" style="background-color: #28a745; color: white; padding: 8px 12px; border-radius: 5px;
+			   border: none; text-decoration: none; transition: 0.3s; font-size: 14px; cursor: pointer;">
+								✅ Đã nhận hàng
+							</button>
+						</form>
+
+
+						<form th:action="@{/customer/order/report-not-received}" method="post"
+							style="display:inline; margin-left: 10px;">
+							<input type="hidden" name="maDonHang" th:value="${order.maDonHang}" />
+							<button type="submit" class="btn btn-warning">❗ Tôi chưa nhận được hàng</button>
+						</form>
+					</div>-->
+
+					<!-- Nếu đã hết hạn xác nhận -->
+					<div
+						th:if="${order.trangThaiDonHang == 'Đã hoàn thành' and !order.daKhachXacNhan and order.thoiGianXacNhanKhach != null and #dates.daysBetween(order.thoiGianXacNhanKhach, T(java.time.LocalDateTime).now()) > 14}">
+						<p style="color: #dc3545;">⏰ Đã hết thời gian xác nhận (14 ngày)</p>
+					</div>
+
+					<!-- Nếu khách đã xác nhận -->
+					<div th:if="${order.trangThaiDonHang == 'Đã hoàn thành' and order.daKhachXacNhan}">
+						<p style="color: #28a745; font-weight: bold;">✔️ Bạn đã xác nhận đã nhận hàng</p>
+					</div>
+
+
+
+					<!-- Nút Hủy đơn hàng (Chỉ hiển thị khi trạng thái là 'Đang xử lý') -->
+					<form id="cancelForm" th:action="@{/customer/order/cancel}" method="POST"
+						onsubmit="return validateCancelReason();" th:if="${order.trangThaiDonHang == 'Đang xử lý'}"
+						style="display: inline;">
+						<input type="hidden" name="maDonHang" th:value="${order.maDonHang}" />
+						<!-- Dropdown chọn lý do hủy -->
+
+						<button id="cancelButton" type="button" style="background-color: #dc3545; color: white; padding: 8px 12px; border-radius: 5px; 
+                    border: none; cursor: pointer; transition: 0.3s; font-size: 14px;"
+							onmouseover="this.style.backgroundColor='#c82333'"
+							onmouseout="this.style.backgroundColor='#dc3545'"
+							onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
+							Hủy Đơn Hàng
+						</button>
+						<!-- Nút Xác nhận Hủy (Ẩn lúc đầu) -->
+						<button type="submit" id="confirmCancelButton" style="display: none; background-color: #dc3545; color: white; padding: 8px 12px; border-radius: 5px; 
+     				   border: none; cursor: pointer; transition: 0.3s; font-size: 14px;"
+							onclick="return validateCancelReason();">
+							Xác nhận hủy
+						</button>
+						<select id="cancelReasonDropdown" name="lyDoHuy"
+							style="padding: 6px; border-radius: 5px; margin-right: 10px; border: 1px solid #ccc;">
+							<option value="">-- Chọn lý do hủy --</option>
+							<option value="Đổi ý, không muốn mua nữa">Đổi ý, không muốn mua nữa</option>
+							<option value="Muốn thay đổi sản phẩm khác">Muốn thay đổi sản phẩm khác</option>
+							<option value="Thời gian giao hàng quá lâu">Thời gian giao hàng quá lâu</option>
+							<option value="Phí vận chuyển quá cao">Phí vận chuyển quá cao</option>
+							<option value="Lý do khác">Lý do khác</option>
+						</select>
+					</form>
+
+
+					<script>
+						document.getElementById("cancelButton").addEventListener("click", function () {
+							let reasonDropdown = document.getElementById("cancelReasonDropdown");
+							let confirmButton = document.getElementById("confirmCancelButton");
+
+							reasonDropdown.style.display = "inline-block"; // Hiện dropdown
+							confirmButton.style.display = "inline-block"; // Hiện nút xác nhận hủy
+							this.style.display = "none"; // Ẩn nút Hủy Đơn Hàng ban đầu
+						});
+
+						function validateCancelReason() {
+							let reason = document.getElementById("cancelReasonDropdown").value;
+							if (reason === "") {
+								alert("Vui lòng chọn lý do hủy đơn hàng.");
+								return false;
+							}
+							return confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?");
+						}
+					</script>
+					<!-- 🔹 Nhóm nút nằm ở góc phải phía trên -->
+					<div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
+						<!-- Nút xem chi tiết -->
+						<a th:href="@{/customer/order/{maDonHang}(maDonHang=${order.maDonHang})}" style="background-color: #007bff; color: white; padding: 8px 12px; border-radius: 5px;
+			  text-decoration: none; transition: 0.3s; font-size: 14px;">
+							Xem Chi Tiết
+						</a>
+
+						<!-- Nút xác nhận khách đã nhận hàng -->
+						<form th:if="${order.trangThaiDonHang == 'Đã hoàn thành' and !order.daKhachXacNhan}"
+							th:action="@{/customer/order/confirm-delivery}" method="post"
+							onsubmit="return confirm('🎉 Cảm ơn bạn đã xác nhận đã nhận hàng!');"
+							style="display:inline;">
+							<input type="hidden" name="maDonHang" th:value="${order.maDonHang}" />
+							<button type="submit" style="background-color: #28a745; color: white; padding: 8px 12px; border-radius: 5px;
+			   border: none; text-decoration: none; transition: 0.3s; font-size: 14px; cursor: pointer;">
+								✅ Đã nhận hàng
+							</button>
+						</form>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+
+
+
+
+
+		<!-- Phân trang -->
+		<!-- Phân trang -->
+		<div class="pagination" style="text-align: center; margin-top: 20px;">
+			<ul style="display: inline-flex; list-style: none; padding: 0;">
+				<!-- Nút Previous -->
+				<li th:if="${currentPage > 0}">
+					<a th:href="@{/customer/order(page=${currentPage - 1}, size=${size}, status=${selectedStatus}, type=${selectedType})}"
+						style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; 
+                      color: #333; background-color: white; margin: 0 5px;">
+						❮ Trước
+					</a>
+				</li>
+
+				<!-- Số trang -->
+				<li th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+					<a th:href="@{/customer/order(page=${i}, size=${size}, status=${selectedStatus}, type=${selectedType})}"
+						th:style="${i == currentPage} ? 
+                'padding: 6px 10px; border: 1px solid #007bff; border-radius: 4px; text-decoration: none; 
+                 color: white; background-color: #007bff; font-weight: bold; margin: 0 5px;' :
+                'padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; 
+                 color: #333; background-color: white; margin: 0 5px;'" th:text="${i + 1}">
+					</a>
+				</li>
+
+				<!-- Nút Next -->
+				<li th:if="${currentPage < totalPages - 1}">
+					<a th:href="@{/customer/order(page=${currentPage + 1}, size=${size}, status=${selectedStatus}, type=${selectedType})}"
+						style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; 
+                      color: #333; background-color: white; margin: 0 5px;">
+						Sau ❯
+					</a>
+				</li>
+			</ul>
+		</div>
+
+
+
+	</main>
+
+	<footer th:replace="customer/fragments/footer :: footer"></footer>
+
+	<style>
+		.order-tabs {
+			display: flex;
+			border-bottom: 2px solid #eee;
+			padding-bottom: 10px;
+			margin-bottom: 20px;
+		}
+
+		.order-tab {
+			text-decoration: none;
+			color: #333;
+			margin-right: 20px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+
+		.order-tab:hover,
+		.order-tab.active-tab {
+			color: #ff6600;
+			font-weight: bold;
+		}
+
+		.order-card {
+			background-color: #fff;
+			border-radius: 10px;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			padding: 15px;
+			margin-bottom: 15px;
+		}
+
+		.order-actions {
+			display: flex;
+			gap: 10px;
+		}
+
+		.btn-view {
+			background-color: #007bff;
+			color: white;
+			padding: 8px 12px;
+			border-radius: 5px;
+			text-decoration: none;
+		}
+
+		.btn-cancel {
+			background-color: #dc3545;
+			color: white;
+			padding: 8px 12px;
+			border-radius: 5px;
+			border: none;
+			cursor: pointer;
+		}
+
+		.pagination {
+			text-align: center;
+			margin-top: 20px;
+		}
+
+		.page-link {
+			text-decoration: none;
+			padding: 6px 10px;
+			border: 1px solid #ccc;
+			color: #333;
+			border-radius: 4px;
+			font-size: 16px;
+			margin: 0 5px;
+		}
+
+		.active-page {
+			background-color: #007bff;
+			color: white;
+			border: 1px solid #007bff;
+		}
+
+		.no-orders {
+			text-align: center;
+			margin-top: 50px;
+		}
+
+		.continue-shopping {
+			display: inline-block;
+			background-color: #007bff;
+			color: white;
+			padding: 10px 20px;
+			border-radius: 20px;
+			text-decoration: none;
+		}
+	</style>
+	<!--import để dùng avatar-->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

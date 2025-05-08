@@ -1,0 +1,1244 @@
+package com.kimngan.ComesticAdmin.controller.warehouse;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.kimngan.ComesticAdmin.entity.ChiTietDonHang;
+import com.kimngan.ComesticAdmin.entity.ChiTietDonNhapHang;
+import com.kimngan.ComesticAdmin.entity.ChiTietDonNhapHangId;
+import com.kimngan.ComesticAdmin.entity.DonHang;
+import com.kimngan.ComesticAdmin.entity.DonNhapHang;
+import com.kimngan.ComesticAdmin.entity.NguoiDung;
+import com.kimngan.ComesticAdmin.entity.NguoiDungDetails;
+import com.kimngan.ComesticAdmin.entity.NhaCungCap;
+import com.kimngan.ComesticAdmin.entity.SanPham;
+import com.kimngan.ComesticAdmin.entity.YeuCauBoSung;
+import com.kimngan.ComesticAdmin.repository.SanPhamRepository;
+import com.kimngan.ComesticAdmin.repository.YeuCauBoSungRepository;
+import com.kimngan.ComesticAdmin.services.ChiTietDonHangService;
+import com.kimngan.ComesticAdmin.services.ChiTietDonNhapHangService;
+import com.kimngan.ComesticAdmin.services.DonHangService;
+import com.kimngan.ComesticAdmin.services.DonNhapHangService;
+import com.kimngan.ComesticAdmin.services.KiemKeKhoService;
+import com.kimngan.ComesticAdmin.services.NguoiDungService;
+import com.kimngan.ComesticAdmin.services.NhaCungCapService;
+import com.kimngan.ComesticAdmin.services.SanPhamService;
+import com.kimngan.ComesticAdmin.services.YeuCauBoSungService;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.security.Principal;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import org.springframework.data.domain.*;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;;
+
+@Controller
+@RequestMapping("/warehouse/import")
+public class WarehouseImportController {
+
+	@Autowired
+	private DonNhapHangService donNhapHangService;
+
+	@Autowired
+	private ChiTietDonNhapHangService chiTietDonNhapHangService;
+
+	@Autowired
+	private SanPhamService sanPhamService;
+
+	@Autowired
+	private NhaCungCapService nhaCungCapService;
+
+	@Autowired
+	private NguoiDungService nguoiDungService;
+
+	@Autowired
+	private ChiTietDonHangService chiTietDonHangService;
+	@Autowired
+	private DonHangService donHangService;
+
+	@Autowired
+	private KiemKeKhoService kiemKeKhoService;
+
+	@Autowired
+	private SanPhamRepository sanPhamRepository;
+
+	@Autowired
+	private YeuCauBoSungService yeuCauBoSungService;
+	@Autowired
+	private YeuCauBoSungRepository yeuCauBoSungRepository;
+
+	// Lấy thông tin nhân viên nhập kho hiện tại
+	@ModelAttribute("currentWarehouseUser")
+	public NguoiDung getCurrentUser(Principal principal) {
+		if (principal != null) {
+			return nguoiDungService.findByTenNguoiDung(principal.getName());
+		}
+		return null;
+	}
+
+	// Trang đăng nhập nhân viên nhập kho
+	@GetMapping("/login")
+	public String showLoginPage() {
+		return "warehouse/import/login";
+	}
+
+	// Đăng xuất
+	@GetMapping("/logout")
+	public String logout() {
+		return "redirect:/warehouse/import/login";
+	}
+
+	@GetMapping("/purchaseorder")
+	public String index(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "keyword", required = false) String keyword) {
+
+		Page<DonNhapHang> pageDonNhapHang;
+
+		if (keyword != null && !keyword.isEmpty()) {
+			pageDonNhapHang = donNhapHangService.findByNhaCungCap_Ten(keyword,
+					PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "maDonNhapHang")));
+			model.addAttribute("keyword", keyword);
+		} else {
+			pageDonNhapHang = donNhapHangService
+					.findAllActive(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "maDonNhapHang")));
+		}
+
+		Map<Integer, String> formattedTotalValues = new HashMap<>();
+		DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
+
+		Map<Integer, String> formattedNgayNhapHangValues = new HashMap<>();
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+		for (DonNhapHang donNhapHang : pageDonNhapHang.getContent()) {
+			BigDecimal tongGiaTri = donNhapHang.getTongGiaTriNhapHang();
+			String formattedValue = tongGiaTri != null ? decimalFormat.format(tongGiaTri) + " VND" : "0.00 VND";
+			formattedTotalValues.put(donNhapHang.getMaDonNhapHang(), formattedValue);
+
+			LocalDate ngayNhapHang = donNhapHang.getNgayNhapHang();
+			String formattedNgayNhap = ngayNhapHang != null ? ngayNhapHang.format(dateFormatter) : "N/A";
+			formattedNgayNhapHangValues.put(donNhapHang.getMaDonNhapHang(), formattedNgayNhap);
+		}
+
+		model.addAttribute("formattedTotalValues", formattedTotalValues);
+		model.addAttribute("formattedNgayNhapHangValues", formattedNgayNhapHangValues);
+		model.addAttribute("listDonNhapHang", pageDonNhapHang.getContent());
+		model.addAttribute("currentPage", pageDonNhapHang.getNumber());
+		model.addAttribute("totalPages", pageDonNhapHang.getTotalPages());
+		model.addAttribute("size", size);
+		model.addAttribute("searchAction", "/warehouse/import/purchaseorder");
+
+		return "warehouse/import/index";
+	}
+
+	@GetMapping("/purchaseorder/details/{id}")
+	public String viewWarehousePurchaseOrderDetails(@PathVariable("id") Integer maDonNhapHang,
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size, Model model) {
+
+		DonNhapHang donNhapHang = donNhapHangService.findById(maDonNhapHang);
+		if (donNhapHang == null) {
+			model.addAttribute("errorMessage", "Không tìm thấy đơn nhập hàng.");
+			return "redirect:/warehouse/import/purchaseorder";
+		}
+
+		// Phân trang cho chi tiết đơn nhập hàng
+		Page<ChiTietDonNhapHang> chiTietPage = chiTietDonNhapHangService.findByDonNhapHang(donNhapHang,
+				PageRequest.of(page, size));
+
+		// Lấy toàn bộ danh sách chi tiết để tính tổng giá trị
+		List<ChiTietDonNhapHang> allChiTietList = chiTietDonNhapHangService.findByDonNhapHang(donNhapHang);
+
+		// Định dạng ngày nhập hàng
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+		String formattedNgayNhap = donNhapHang.getNgayNhapHang().format(formatter);
+
+		// Định dạng đơn giá và tổng giá tiền cho từng chi tiết
+		Map<Integer, String> formattedChiTietValues = new HashMap<>();
+		Map<Integer, String> formattedTotalPrices = new HashMap<>();
+		DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
+		BigDecimal totalOrderPrice = BigDecimal.ZERO;
+
+		for (ChiTietDonNhapHang chiTiet : allChiTietList) {
+
+			BigDecimal donGiaNhap = chiTiet.getDonGiaNhap();
+			int soLuongNhap = chiTiet.getSoLuongNhap();
+			BigDecimal totalPrice = donGiaNhap.multiply(new BigDecimal(soLuongNhap));
+
+			if (chiTietPage.getContent().contains(chiTiet)) {
+				String formattedValue = decimalFormat.format(donGiaNhap) + " VND";
+				String formattedTotalPrice = decimalFormat.format(totalPrice) + " VND";
+				formattedChiTietValues.put(chiTiet.getSanPham().getMaSanPham(), formattedValue);
+				formattedTotalPrices.put(chiTiet.getSanPham().getMaSanPham(), formattedTotalPrice);
+			}
+
+			totalOrderPrice = totalOrderPrice.add(totalPrice);
+		}
+
+		String formattedTotalOrderPrice = decimalFormat.format(totalOrderPrice) + " VND";
+
+		// Gửi dữ liệu xuống view
+		model.addAttribute("formattedChiTietValues", formattedChiTietValues);
+		model.addAttribute("formattedTotalPrices", formattedTotalPrices);
+		model.addAttribute("formattedTotalOrderPrice", formattedTotalOrderPrice);
+		model.addAttribute("formattedNgayNhap", formattedNgayNhap);
+		model.addAttribute("donNhapHang", donNhapHang);
+		model.addAttribute("chiTietPage", chiTietPage);
+
+		return "warehouse/import/detail";
+	}
+
+	@GetMapping("/ton-kho")
+	public String hienThiTonKho(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(value = "keyword", required = false) String keyword,
+			@RequestParam(value = "maSanPham", required = false) Integer maSearch,
+
+			@RequestParam(value = "trangThai", required = false, defaultValue = "true") Boolean trangThai) {
+
+		Page<SanPham> pageSanPham;
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "maSanPham"));
+
+		if (maSearch != null) {
+			pageSanPham = sanPhamRepository.searchActiveByMaSanPham(String.valueOf(maSearch), pageable);
+		} else if (keyword != null && !keyword.isEmpty()) {
+			pageSanPham = sanPhamService.searchAllActiveProductsWithOrderDetails(keyword,
+					PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "maSanPham")));
+		} else {
+			pageSanPham = sanPhamService.findByTrangThai(true,
+					PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "maSanPham")));
+		}
+
+		Map<Integer, Integer> tongSoLuongNhapMap = new HashMap<>();
+		Map<Integer, Integer> soLuongTonKhoMap = new HashMap<>();
+
+		for (SanPham sanPham : pageSanPham.getContent()) {
+			Integer maSanPham = sanPham.getMaSanPham();
+
+			int tongSoLuongNhap = chiTietDonNhapHangService.getTotalImportedQuantityBySanPhamId(sanPham.getMaSanPham());
+			int soLuongBan = chiTietDonHangService.getTotalQuantityBySanPhamId(sanPham.getMaSanPham());
+			int soLuongTrenKe = sanPhamService.getSoLuongTrenKe(maSanPham);
+			int deltaKiemKe = kiemKeKhoService.getDeltaKiemKe(maSanPham);
+			int soLuongTraHang = donHangService.getSoLuongTraHang(maSanPham);
+			// Tính số lượng tồn kho đúng
+			// int soLuongTonKho = tongSoLuongNhap - soLuongBan - sanPham.getSoLuong();
+			// int soLuongTonKho = tongSoLuongNhap - soLuongBan - sanPham.getSoLuong();
+			// int soLuongTonKho = tongSoLuongNhap - soLuongBan - soLuongTrenKe ;
+//	        Integer tonKhoDaDuyet = kiemKeKhoService.getLastApprovedStock(maSanPham);
+// 
+//			int soLuongTonKho = (tonKhoDaDuyet != null) 
+//			            ? (tonKhoDaDuyet - soLuongTrenKe ) 
+//			            : (tongSoLuongNhap - soLuongBan - soLuongTrenKe); 
+			Integer tonKhoDaDuyet = kiemKeKhoService.getLastApprovedStock(maSanPham);
+
+			int soLuongTonKho = (tonKhoDaDuyet != null)
+					? (tongSoLuongNhap - soLuongBan - soLuongTrenKe + deltaKiemKe + soLuongTraHang)
+					: (tongSoLuongNhap - soLuongBan - soLuongTrenKe + soLuongTraHang);
+
+			tongSoLuongNhapMap.put(sanPham.getMaSanPham(), tongSoLuongNhap);
+			soLuongTonKhoMap.put(sanPham.getMaSanPham(), soLuongTonKho);
+		}
+
+		model.addAttribute("danhSachSanPham", pageSanPham.getContent());
+		model.addAttribute("tongSoLuongNhapMap", tongSoLuongNhapMap);
+		model.addAttribute("soLuongTonKhoMap", soLuongTonKhoMap);
+		model.addAttribute("currentPage", pageSanPham.getNumber());
+		model.addAttribute("totalPages", pageSanPham.getTotalPages());
+		model.addAttribute("size", size);
+		model.addAttribute("maSanPham", maSearch); // để giữ lại trên form
+
+		model.addAttribute("keyword", keyword);
+		model.addAttribute("trangThai", trangThai);
+
+		return "warehouse/import/ton-kho";
+	}
+
+	// cập nhật số lượng trên kệ
+	@PostMapping("/cap-nhat-so-luong")
+	public String capNhatSoLuong(@RequestParam("maSanPham") Integer maSanPham,
+			@RequestParam("soLuongMoi") Integer soLuongMoi, RedirectAttributes redirectAttributes) {
+
+		// Kiểm tra sản phẩm có tồn tại không
+		SanPham sanPham = sanPhamService.findById(maSanPham);
+		if (sanPham == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Sản phẩm không tồn tại.");
+			return "redirect:/warehouse/import/ton-kho";
+		}
+
+		// Tính tổng số lượng nhập từ chi tiết đơn nhập hàng
+		// Tính tổng số lượng nhập từ chi tiết đơn nhập hàng
+		int tongSoLuongNhap = chiTietDonNhapHangService.getTotalImportedQuantityBySanPhamId(maSanPham);
+		int soLuongBan = chiTietDonHangService.getTotalQuantityBySanPhamId(maSanPham);
+		int soLuongTrenKe = sanPhamService.getSoLuongTrenKe(maSanPham);
+		int soLuongTraHang = donHangService.getSoLuongTraHang(maSanPham);
+		int deltaKiemKe = kiemKeKhoService.getDeltaKiemKe(maSanPham);
+		// Kiểm tra xem có tồn kho đã được admin xét duyệt không
+		Integer tonKhoDaDuyet = kiemKeKhoService.getLastApprovedStock(maSanPham);
+		// int deltaKiemKe = kiemKeKhoService.getDeltaKiemKe(maSanPham);
+		// Tính số lượng tồn kho thực tế
+		// int soLuongTonKho = tongSoLuongNhap - soLuongBan - soLuongMoi;
+		int soLuongTonKho;
+		if (tonKhoDaDuyet != null) {
+			// Nếu đã duyệt, dùng số lượng tồn kho sau khi duyệt
+			soLuongTonKho = tongSoLuongNhap - soLuongBan - soLuongTrenKe + +deltaKiemKe + soLuongTraHang;
+		} else {
+			// Nếu chưa duyệt, tính tồn kho như cũ
+			soLuongTonKho = tongSoLuongNhap - soLuongBan - soLuongTrenKe + soLuongTraHang;
+		}
+
+		System.out.println("🔎 [DEBUG] Tính toán tồn kho:");
+		System.out.println("   - Tổng nhập: " + tongSoLuongNhap);
+		System.out.println("   - Tổng bán: " + soLuongBan);
+		System.out.println("   - Trên kệ: " + soLuongTrenKe);
+		System.out.println("   - Tồn kho thực tế: " + soLuongTonKho);
+		System.out.println("   - Số lượng mới nhập: " + soLuongMoi);
+		// int soLuongTonKho = tongSoLuongNhap - soLuongBan ;
+		// Ràng buộc: không cho nhập số lượng trên kệ vượt quá tổng số lượng nhập
+		if (soLuongMoi > tongSoLuongNhap) {
+			System.out.println("❌ [ERROR] Số lượng trên kệ vượt quá tổng nhập!");
+			redirectAttributes.addFlashAttribute("errorMessage",
+					"Số lượng trên kệ không thể lớn hơn tổng số lượng nhập (" + tongSoLuongNhap + ").");
+			return "redirect:/warehouse/import/ton-kho";
+		}
+
+		// Ràng buộc: không cho nhập số lượng âm hoặc vượt quá số lượng tồn kho
+		if (soLuongMoi < 0 || soLuongMoi > soLuongTonKho + sanPham.getSoLuong()) {
+			System.out.println("❌ [ERROR] Số lượng trên kệ không hợp lệ!");
+			redirectAttributes.addFlashAttribute("errorMessage",
+					"Số lượng trên kệ phải nằm trong khoảng từ 0 đến " + (soLuongTonKho + sanPham.getSoLuong()) + ".");
+			return "redirect:/warehouse/import/ton-kho";
+		}
+
+		// Cập nhật số lượng trên kệ
+		int soLuongTruocCapNhat = sanPham.getSoLuong();
+
+		sanPham.setSoLuong(soLuongMoi);
+		sanPhamService.update(sanPham);
+
+		// sanPhamService.updateSoLuongTonKho(maSanPham, soLuongTonKho);
+
+		System.out.println("✅ [SUCCESS] Cập nhật số lượng trên kệ thành công!");
+		System.out.println("   - Sản phẩm ID: " + maSanPham);
+		System.out.println("   - Trước cập nhật: " + soLuongTruocCapNhat);
+		System.out.println("   - Sau cập nhật: " + soLuongMoi);
+		// Thông báo thành công
+		redirectAttributes.addFlashAttribute("successMessage", "Cập nhật số lượng trên kệ thành công.");
+		return "redirect:/warehouse/import/ton-kho";
+	}
+
+//	@GetMapping("/yeu-cau-bo-sung")
+//	public String hienThiDanhSachYeuCau(
+//	        Model model,
+//	        @RequestParam(defaultValue = "0") int page,
+//	        @RequestParam(defaultValue = "10") int size) {
+//
+//	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "thoiGianYeuCau"));
+//	    Page<YeuCauBoSung> pageYeuCau = yeuCauBoSungService.findAll(pageable);
+//
+//	    model.addAttribute("pageYeuCau", pageYeuCau);
+//	    model.addAttribute("currentPage", page);
+//	    model.addAttribute("totalPages", pageYeuCau.getTotalPages());
+//
+//	    return "warehouse/export/yeu-cau-bo-sung";
+//	}
+
+	@GetMapping("/yeu-cau-bo-sung")
+	public String hienThiDanhSachYeuCau(Model model, @RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) Integer maSanPham,
+			@RequestParam(required = false) String tenSanPham) {
+
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "thoiGianYeuCau"));
+		Page<YeuCauBoSung> pageYeuCau;
+
+		if (maSanPham != null) {
+			pageYeuCau = yeuCauBoSungRepository.findBySanPham_MaSanPham(maSanPham, pageable);
+		} else if (tenSanPham != null && !tenSanPham.isBlank()) {
+			pageYeuCau = yeuCauBoSungRepository.findBySanPham_TenSanPhamContainingIgnoreCase(tenSanPham, pageable);
+		} else {
+			pageYeuCau = yeuCauBoSungRepository.findAll(pageable);
+		}
+
+		model.addAttribute("pageYeuCau", pageYeuCau);
+		model.addAttribute("currentPage", page);
+		model.addAttribute("totalPages", pageYeuCau.getTotalPages());
+		model.addAttribute("maSanPham", maSanPham); // để giữ lại ô tìm kiếm
+		model.addAttribute("tenSanPham", tenSanPham);
+
+		return "warehouse/export/yeu-cau-bo-sung";
+	}
+
+	@PostMapping("/xac-nhan-yeu-cau/{id}")
+	public String xacNhanYeuCau(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+		YeuCauBoSung yeuCau = yeuCauBoSungService.findById(id);
+		if (yeuCau == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy yêu cầu.");
+			return "redirect:/warehouse/import/yeu-cau-bo-sung";
+		}
+
+		SanPham sanPham = yeuCau.getSanPham();
+		Integer maSanPham = sanPham.getMaSanPham();
+
+		int tongSoLuongNhap = chiTietDonNhapHangService.getTotalImportedQuantityBySanPhamId(maSanPham);
+		int soLuongBan = chiTietDonHangService.getTotalQuantityBySanPhamId(maSanPham);
+		int soLuongTrenKe = sanPhamService.getSoLuongTrenKe(maSanPham);
+		int soLuongTraHang = donHangService.getSoLuongTraHang(maSanPham);
+		int deltaKiemKe = kiemKeKhoService.getDeltaKiemKe(maSanPham);
+
+		Integer tonKhoDaDuyet = kiemKeKhoService.getLastApprovedStock(maSanPham);
+		int soLuongTonKho = (tonKhoDaDuyet != null)
+				? (tongSoLuongNhap - soLuongBan - soLuongTrenKe + deltaKiemKe + soLuongTraHang)
+				: (tongSoLuongNhap - soLuongBan - soLuongTrenKe + soLuongTraHang);
+
+		if (yeuCau.getSoLuongYeuCau() > soLuongTonKho) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không đủ hàng tồn kho để bổ sung.");
+			return "redirect:/warehouse/import/yeu-cau-bo-sung";
+		}
+
+		// ✅ Trừ kho và cộng vào số lượng trên kệ
+		sanPham.setSoLuong(sanPham.getSoLuong() + yeuCau.getSoLuongYeuCau());
+		sanPhamService.update(sanPham);
+
+		// ✅ Đánh dấu đã xử lý yêu cầu
+		yeuCau.setDaXuLy(true);
+		yeuCauBoSungService.save(yeuCau);
+
+		redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận và bổ sung hàng lên kệ.");
+		return "redirect:/warehouse/import/yeu-cau-bo-sung";
+	}
+
+	// Hiển thị danh sách nhà cung cấp
+	@GetMapping("/nha-cung-cap")
+	public String danhSachNhaCungCap(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "5") int size,
+			@RequestParam(value = "keyword", required = false) String keyword) {
+
+		Page<NhaCungCap> pageNhaCungCap = (keyword != null && !keyword.isEmpty())
+				? nhaCungCapService.searchByName(keyword,
+						PageRequest.of(page, size, Sort.by("maNhaCungCap").descending()))
+				: nhaCungCapService.findAllActive(PageRequest.of(page, size, Sort.by("maNhaCungCap").descending()));
+
+		model.addAttribute("listNhaCungCap", pageNhaCungCap.getContent());
+		model.addAttribute("currentPage", pageNhaCungCap.getNumber());
+		model.addAttribute("totalPages", pageNhaCungCap.getTotalPages());
+		model.addAttribute("size", size);
+		model.addAttribute("searchAction", "/warehouse/import/nha-cung-cap");
+		return "warehouse/import/nha-cung-cap/index";
+	}
+
+	// Thêm nhà cung cấp
+	@GetMapping("/them-nha-cung-cap")
+	public String formThemNhaCungCap(Model model) {
+		model.addAttribute("nhaCungCap", new NhaCungCap());
+		return "warehouse/import/nha-cung-cap/them";
+	}
+
+	@PostMapping("/them-nha-cung-cap")
+	public String themNhaCungCap(@ModelAttribute("nhaCungCap") NhaCungCap nhaCungCap, Model model) {
+		if (nhaCungCapService.create(nhaCungCap)) {
+			return "redirect:/warehouse/import/nha-cung-cap";
+		} else {
+			model.addAttribute("error", "Tên nhà cung cấp đã tồn tại.");
+			return "warehouse/import/nha-cung-cap/them";
+		}
+	}
+
+	// Trang chỉnh sửa nhà cung cấp
+	@GetMapping("/nha-cung-cap/edit/{id}")
+	public String formChinhSuaNhaCungCap(@PathVariable("id") Integer id, Model model) {
+		Optional<NhaCungCap> nhaCungCapOpt = nhaCungCapService.findByIdOptional(id);
+		if (!nhaCungCapOpt.isPresent()) {
+			return "redirect:/warehouse/import/nha-cung-cap"; // Nếu không tìm thấy, quay lại danh sách nhà cung cấp
+		}
+
+		model.addAttribute("nhaCungCap", nhaCungCapOpt.get());
+		return "warehouse/import/nha-cung-cap/edit"; // Trả về trang chỉnh sửa nhà cung cấp
+	}
+
+	// Xử lý cập nhật nhà cung cấp
+	@PostMapping("/nha-cung-cap/edit/{id}")
+	public String capNhatNhaCungCap(@PathVariable("id") Integer id,
+			@ModelAttribute("nhaCungCap") NhaCungCap nhaCungCap) {
+		Optional<NhaCungCap> existingSupplierOpt = nhaCungCapService.findByIdOptional(id);
+		if (!existingSupplierOpt.isPresent()) {
+			return "redirect:/warehouse/import/nha-cung-cap"; // Nếu không tìm thấy, quay lại danh sách nhà cung cấp
+		}
+
+		NhaCungCap existingSupplier = existingSupplierOpt.get();
+		existingSupplier.setTenNhaCungCap(nhaCungCap.getTenNhaCungCap());
+		existingSupplier.setSdtNhaCungCap(nhaCungCap.getSdtNhaCungCap());
+		existingSupplier.setDiaChiNhaCungCap(nhaCungCap.getDiaChiNhaCungCap());
+		existingSupplier.setEmailNhaCungCap(nhaCungCap.getEmailNhaCungCap());
+
+		nhaCungCapService.update(existingSupplier);
+
+		return "redirect:/warehouse/import/nha-cung-cap";
+	}
+
+	@PostMapping("/nha-cung-cap1/delete/{id}")
+	public String xoaNhaCungCap(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+		Optional<NhaCungCap> supplierOpt = nhaCungCapService.findByIdOptional(id);
+		if (supplierOpt.isPresent()) {
+			NhaCungCap supplier = supplierOpt.get();
+
+			// Kiểm tra xem nhà cung cấp có liên quan đến đơn nhập hàng hay không
+			if (supplier.getDonNhapHangs() == null || supplier.getDonNhapHangs().isEmpty()) {
+				// Nếu không liên quan đến đơn nhập hàng, xóa hoàn toàn
+				nhaCungCapService.deleteById(id);
+				redirectAttributes.addFlashAttribute("successMessage", "Nhà cung cấp đã được xóa hoàn toàn.");
+			} else {
+				// Nếu liên quan đến đơn nhập hàng, chỉ chuyển trạng thái
+				supplier.setTrangThai(false);
+				nhaCungCapService.update(supplier);
+				redirectAttributes.addFlashAttribute("successMessage",
+						"Nhà cung cấp đã được chuyển trạng thái không hoạt động.");
+			}
+		} else {
+			redirectAttributes.addFlashAttribute("errorMessage", "Nhà cung cấp không tồn tại.");
+		}
+
+		return "redirect:/warehouse/import/nha-cung-cap";
+	}
+
+	// Hiển thị trang thêm đơn nhập hàng
+	@GetMapping("/add-purchase-order")
+	public String showAddPurchaseOrderPage(Model model) {
+		model.addAttribute("providers", nhaCungCapService.findAllActive(PageRequest.of(0, 10)).getContent());
+
+		// Lấy thông tin người dùng đăng nhập
+		return "warehouse/import/add"; // Trả về trang thêm đơn nhập hàng
+	}
+
+	// Lưu đơn nhập hàng (chưa có chi tiết)
+	@PostMapping("/save-purchase-order")
+	public String createPurchaseOrder(
+			@RequestParam("ngayNhapHang") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayNhapHang,
+			@RequestParam("maNhaCungCap") Integer maNhaCungCap, RedirectAttributes redirectAttributes) {
+
+		LocalDate today = LocalDate.now();
+		if (ngayNhapHang.isAfter(today)) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Ngày nhập hàng không được lớn hơn hôm nay.");
+			return "redirect:/warehouse/import/add-purchase-order";
+		}
+
+		// Kiểm tra nhà cung cấp
+		NhaCungCap nhaCungCap = nhaCungCapService.findById(maNhaCungCap);
+		if (nhaCungCap == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Nhà cung cấp không tồn tại.");
+			return "redirect:/warehouse/import/add-purchase-order";
+		}
+
+		// Tạo đơn nhập hàng với tổng giá trị ban đầu là 0
+		DonNhapHang donNhapHang = new DonNhapHang();
+		donNhapHang.setNgayNhapHang(ngayNhapHang);
+		donNhapHang.setNhaCungCap(nhaCungCap);
+		donNhapHang.setTongGiaTriNhapHang(BigDecimal.ZERO);
+		donNhapHang.setTrangThai(true);
+
+		donNhapHangService.create(donNhapHang);
+
+		redirectAttributes.addFlashAttribute("successMessage", "Đơn nhập hàng đã được lưu.");
+		return "redirect:/warehouse/import/add-purchase-order-detail/" + donNhapHang.getMaDonNhapHang();
+	}
+
+	// Hiển thị trang thêm chi tiết đơn nhập hàng
+	@GetMapping("/add-purchase-order-detail/{maDonNhapHang}")
+	public String showAddPurchaseOrderDetailsPage(@PathVariable("maDonNhapHang") Integer maDonNhapHang, Model model) {
+		DonNhapHang donNhapHang = donNhapHangService.findById(maDonNhapHang);
+		if (donNhapHang == null) {
+			model.addAttribute("errorMessage", "Không tìm thấy đơn nhập hàng.");
+			return "redirect:/warehouse/import";
+		}
+
+		model.addAttribute("sanPhams", sanPhamService.findByTrangThai(true));
+		model.addAttribute("donNhapHang", donNhapHang);
+		return "warehouse/import/add-details";
+	}
+
+	@PostMapping("/save-purchase-order-details/{maDonNhapHang}")
+	public String savePurchaseOrderDetails(@PathVariable("maDonNhapHang") Integer maDonNhapHang,
+			@RequestParam(value = "sanPhamIds", required = false) List<Integer> sanPhamIds,
+			@RequestParam(value = "soLuongNhap", required = false) List<Integer> soLuongNhap,
+			@RequestParam(value = "donGiaNhap", required = false) List<BigDecimal> donGiaNhap,
+			RedirectAttributes redirectAttributes) {
+
+		System.out.println("=== Bắt đầu lưu chi tiết đơn nhập hàng ===");
+		System.out.println("Mã đơn nhập hàng: " + maDonNhapHang);
+
+		// Kiểm tra xem đơn nhập hàng có tồn tại không
+		DonNhapHang donNhapHang = donNhapHangService.findById(maDonNhapHang);
+		if (donNhapHang == null) {
+			System.out.println("LỖI: Không tìm thấy đơn nhập hàng");
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn nhập hàng.");
+			return "redirect:/warehouse/import";
+		}
+
+		// Kiểm tra danh sách sản phẩm
+		if (sanPhamIds == null || sanPhamIds.isEmpty()) {
+			System.out.println("LỖI: Không có sản phẩm nào được chọn");
+			redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn ít nhất một sản phẩm.");
+			return "redirect:/warehouse/import/add-purchase-order-detail/" + maDonNhapHang;
+		}
+
+		BigDecimal tongGiaTriNhap = donNhapHang.getTongGiaTriNhapHang();
+
+		for (int i = 0; i < sanPhamIds.size(); i++) {
+			System.out.println("Lưu chi tiết: Sản phẩm ID " + sanPhamIds.get(i) + ", Số lượng: " + soLuongNhap.get(i)
+					+ ", Đơn giá: " + donGiaNhap.get(i) + " VND");
+
+			// Lấy sản phẩm từ database
+			SanPham sanPham = sanPhamService.findById(sanPhamIds.get(i));
+			if (sanPham == null) {
+				System.out.println("LỖI: Không tìm thấy sản phẩm có ID " + sanPhamIds.get(i));
+				continue;
+			}
+
+			// **Khởi tạo khóa chính tổng hợp**
+			ChiTietDonNhapHangId chiTietId = new ChiTietDonNhapHangId(maDonNhapHang, sanPham.getMaSanPham());
+
+			// **Tạo đối tượng chi tiết đơn nhập hàng**
+			ChiTietDonNhapHang chiTiet = new ChiTietDonNhapHang();
+			chiTiet.setId(chiTietId); // Gán ID trước khi lưu
+			chiTiet.setDonNhapHang(donNhapHang);
+			chiTiet.setSanPham(sanPham);
+			chiTiet.setSoLuongNhap(soLuongNhap.get(i));
+			chiTiet.setDonGiaNhap(donGiaNhap.get(i));
+			chiTiet.setTrangThai(true);
+
+			// **Cập nhật tổng giá trị nhập hàng**
+			BigDecimal giaTriNhap = donGiaNhap.get(i).multiply(new BigDecimal(soLuongNhap.get(i)));
+			tongGiaTriNhap = tongGiaTriNhap.add(giaTriNhap);
+
+			System.out.println("Chi tiết đơn nhập hàng sẽ được lưu: " + chiTiet);
+
+			// **Lưu chi tiết đơn nhập hàng**
+			chiTietDonNhapHangService.create(chiTiet);
+		}
+
+		// Cập nhật tổng giá trị nhập hàng
+		donNhapHang.setTongGiaTriNhapHang(tongGiaTriNhap);
+		donNhapHangService.update(donNhapHang);
+
+		for (Integer maSanPham : sanPhamIds) {
+			sanPhamService.capNhatSoLuongTonKho(maSanPham);
+		}
+
+		System.out.println("=== Hoàn tất lưu chi tiết đơn nhập hàng ===");
+		redirectAttributes.addFlashAttribute("successMessage", "Chi tiết đơn nhập hàng đã được lưu.");
+		return "redirect:/warehouse/import/purchaseorder";
+	}
+
+	@GetMapping("/purchaseorder/export/{id}")
+	public void exportToPDF(@PathVariable("id") Integer id, HttpServletResponse response) throws IOException {
+		response.setContentType("application/pdf");
+		DonNhapHang donNhapHang = donNhapHangService.findById(id);
+		// Định dạng ngày
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+		String fileName = "DonNhap_" + donNhapHang.getMaDonNhapHang() + "_"
+				+ donNhapHang.getNgayNhapHang().format(formatter) + ".pdf";
+		response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+		// Tạo tài liệu PDF
+		PDDocument document = new PDDocument();
+		PDPage page = new PDPage();
+		document.addPage(page);
+
+		// Tải font Unicode
+		InputStream fontStream = getClass().getResourceAsStream("/fonts/TIMES.TTF");
+		PDFont font = PDType0Font.load(document, fontStream);
+
+		PDPageContentStream contentStream = new PDPageContentStream(document, page);
+
+		// Tiêu đề chính giữa
+		contentStream.beginText();
+		contentStream.setFont(font, 16); // Font lớn hơn cho tiêu đề
+		contentStream.newLineAtOffset(220, 750); // Căn giữa
+		contentStream.showText("ĐƠN NHẬP HÀNG");
+		contentStream.endText();
+
+		// Hiển thị thông tin chi tiết bên trái
+		float infoStartY = 700; // Điều chỉnh khoảng cách xuống dưới
+		contentStream.beginText();
+		contentStream.setFont(font, 12);
+		contentStream.newLineAtOffset(50, infoStartY);
+		contentStream.setLeading(14.5f);
+
+		// DonNhapHang donNhapHang = donNhapHangService.findById(id);
+		// Định dạng ngày
+		// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+		contentStream.showText("Mã đơn nhập: " + donNhapHang.getMaDonNhapHang());
+		contentStream.newLine();
+		contentStream.showText("Ngày nhập: " + donNhapHang.getNgayNhapHang().format(formatter));
+		contentStream.newLine();
+		contentStream.endText();
+
+		// Hiển thị thông tin nhà cung cấp bên phải
+		contentStream.beginText();
+		contentStream.setFont(font, 12);
+		contentStream.newLineAtOffset(270, infoStartY); // Căn lề phải
+		contentStream.setLeading(14.5f);
+
+		contentStream.showText("Nhà cung cấp: " + donNhapHang.getNhaCungCap().getTenNhaCungCap());
+		contentStream.newLine();
+		contentStream.showText("Email: " + donNhapHang.getNhaCungCap().getEmailNhaCungCap());
+		contentStream.newLine();
+		contentStream.endText();
+
+		// Bắt đầu vẽ bảng
+		float startX = 50; // Vị trí bắt đầu của bảng
+		float startY = infoStartY - 30; // Vị trí dòng đầu tiên
+		float[] columnWidths = { 100, 190, 65, 90, 100 }; // Điều chỉnh cột cho cân đối
+		float cellHeight = 60; // Tăng chiều cao để hình ảnh không bị méo
+		float headerCellHeight = 40;
+
+		// Tiêu đề bảng
+		String[] headers = { "HÌNH ẢNH", "SẢN PHẨM", "SỐ LƯỢNG NHẬP", "ĐƠN GIÁ NHẬP", "TỔNG GIÁ TIỀN" };
+		drawRow(contentStream, font, startX, startY, headerCellHeight, columnWidths, headers, null, document);
+		startY -= headerCellHeight; // Di chuyển xuống dòng tiếp theo
+
+		// Lấy danh sách chi tiết đơn nhập hàng
+		DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
+		List<ChiTietDonNhapHang> chiTietList = chiTietDonNhapHangService.findByDonNhapHang(donNhapHang);
+		// Tính tổng giá trị đơn nhập hàng
+		BigDecimal tongGiaTriNhap = chiTietList.stream()
+				.map(chiTiet -> chiTiet.getDonGiaNhap().multiply(new BigDecimal(chiTiet.getSoLuongNhap())))
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		for (ChiTietDonNhapHang chiTiet : chiTietList) {
+			String imagePath = "src/main/resources/static/upload/" + chiTiet.getSanPham().getHinhAnh();
+			String[] data = { "", // Placeholder cho hình ảnh
+					chiTiet.getSanPham().getTenSanPham(), String.valueOf(chiTiet.getSoLuongNhap()),
+					decimalFormat.format(chiTiet.getDonGiaNhap()) + " VND",
+					decimalFormat.format(chiTiet.getDonGiaNhap().multiply(new BigDecimal(chiTiet.getSoLuongNhap())))
+							+ " VND" };
+			drawRow(contentStream, font, startX, startY, cellHeight, columnWidths, data, imagePath, document);
+			startY -= cellHeight;
+		}
+
+		// Hiển thị tổng tiền sau bảng, cách bảng 10px
+		contentStream.beginText();
+		contentStream.setFont(font, 12);
+
+		// Tính toán vị trí hiển thị tổng tiền ở bên phải
+		float totalTextX = startX + columnWidths[0] + columnWidths[1] + 10; // Tổng độ rộng cột
+		contentStream.newLineAtOffset(totalTextX, startY - 20); // Vị trí ngoài bảng, bên phải
+		contentStream.showText("Tổng tiền phải trả: " + decimalFormat.format(tongGiaTriNhap) + " VND");
+		contentStream.endText();
+
+		contentStream.close();
+
+		// Lưu tài liệu
+		document.save(response.getOutputStream());
+		document.close();
+	}
+
+	private void drawRow(PDPageContentStream contentStream, PDFont font, float startX, float startY, float cellHeight,
+			float[] columnWidths, String[] content, String imagePath, PDDocument document) throws IOException {
+		float currentX = startX;
+
+// Vẽ khung của dòng
+		contentStream.setLineWidth(0.75f); // Đường viền rõ hơn
+		for (float width : columnWidths) {
+			contentStream.addRect(currentX, startY - cellHeight, width, cellHeight);
+			currentX += width;
+		}
+		contentStream.stroke();
+
+		currentX = startX;
+
+		for (int i = 0; i < content.length; i++) {
+			if (i == 0 && imagePath != null) {
+				// Nếu là cột hình ảnh, vẽ hình
+				PDImageXObject image = PDImageXObject.createFromFile(imagePath, document);
+				float imageWidth = columnWidths[i] - 10;
+				float aspectRatio = (float) image.getHeight() / image.getWidth();
+				float imageHeight = imageWidth * aspectRatio;
+				if (imageHeight > cellHeight - 10) {
+					imageHeight = cellHeight - 10;
+					imageWidth = imageHeight / aspectRatio;
+				}
+				float imageX = currentX + (columnWidths[i] - imageWidth) / 2;
+				float imageY = startY - cellHeight + (cellHeight - imageHeight) / 2;
+				contentStream.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+			} else {
+				// Nếu là nội dung văn bản
+				float textX = currentX + 5; // Padding
+				float textY = startY - 15; // Vị trí bắt đầu text
+				contentStream.beginText();
+				contentStream.setFont(font, 10);
+				contentStream.newLineAtOffset(textX, textY);
+
+				// Xử lý nội dung dài
+				List<String> lines = splitTextIntoLines(content[i], columnWidths[i] - 10, font, 10);
+				for (String line : lines) {
+					contentStream.showText(line);
+					contentStream.newLineAtOffset(0, -12); // Xuống dòng
+				}
+				contentStream.endText();
+			}
+			currentX += columnWidths[i];
+		}
+	}
+
+	private List<String> splitTextIntoLines(String text, float maxWidth, PDFont font, int fontSize) throws IOException {
+		List<String> lines = new ArrayList<>();
+		StringBuilder currentLine = new StringBuilder();
+		for (String word : text.split(" ")) {
+			String testLine = currentLine.length() > 0 ? currentLine + " " + word : word;
+			float textWidth = font.getStringWidth(testLine) / 1000 * fontSize;
+			if (textWidth > maxWidth) {
+				lines.add(currentLine.toString());
+				currentLine = new StringBuilder(word);
+			} else {
+				currentLine.append(word).append(" ");
+			}
+		}
+		lines.add(currentLine.toString());
+		return lines;
+	}
+
+	@GetMapping("/thong-ke")
+	public String getImportStatistics(
+			@RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+			@RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+			Model model) {
+
+		// Nếu fromDate và toDate không có, thì mặc định là 30 ngày gần nhất
+		if (fromDate == null) {
+			fromDate = LocalDate.now().minusDays(30); // 30 ngày trước
+		}
+		if (toDate == null) {
+			toDate = LocalDate.now(); // Ngày hiện tại
+		}
+
+		List<Object[]> results = chiTietDonNhapHangService.getImportStatistics(fromDate, toDate);
+
+		List<Object[]> topProducts = chiTietDonNhapHangService.getTopImportedProducts(fromDate, toDate);
+
+		List<String> labels = new ArrayList<>();
+		List<Integer> values = new ArrayList<>();
+
+		for (Object[] row : results) {
+			if (row[0] != null && row[1] != null) {
+				labels.add(row[0].toString());
+				values.add(((Number) row[1]).intValue());
+			}
+		}
+
+		List<Object[]> danhSachBaoCao = chiTietDonNhapHangService.getBaoCaoChiTiet(fromDate, toDate);
+		List<Object[]> topSuppliers = chiTietDonNhapHangService.getTopSuppliers(fromDate, toDate);
+
+		model.addAttribute("labels", labels);
+		model.addAttribute("values", values);
+		model.addAttribute("fromDate", fromDate);
+		model.addAttribute("toDate", toDate);
+		model.addAttribute("danhSachBaoCao", danhSachBaoCao);
+		model.addAttribute("topSuppliers", topSuppliers);
+		model.addAttribute("topProducts", topProducts);
+
+		return "warehouse/import/thong-ke"; // Trả về file thong-ke.html
+	}
+
+	@GetMapping("/thong-ke/tong-gia-tri")
+	public String getTotalImportValue(
+			@RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+			@RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+			Model model) {
+
+		if (fromDate == null)
+			fromDate = LocalDate.now().minusDays(30);
+		if (toDate == null)
+			toDate = LocalDate.now();
+
+		// Gọi service để lấy dữ liệu tổng giá trị nhập kho theo thời gian
+		List<Object[]> results = chiTietDonNhapHangService.getTotalImportValue(fromDate, toDate);
+
+		List<String> labels = new ArrayList<>();
+		List<BigDecimal> values = new ArrayList<>();
+
+		for (Object[] row : results) {
+			labels.add(row[0].toString()); // Tên sản phẩm
+			values.add((BigDecimal) row[1]); // Tổng giá trị nhập
+		}
+		List<Object[]> reportData = chiTietDonNhapHangService.getTotalImportReport(fromDate, toDate);
+
+		model.addAttribute("labels", labels);
+		model.addAttribute("values", values);
+		model.addAttribute("fromDate", fromDate);
+		model.addAttribute("toDate", toDate);
+		model.addAttribute("reportData", reportData);
+
+		return "warehouse/import/tong-gia-tri-nhap"; // Trả về file mới
+	}
+
+	@GetMapping("/thong-ke/xu-huong")
+	public String getImportTrend(
+			@RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+			@RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+			Model model) {
+
+		if (fromDate == null)
+			fromDate = LocalDate.now().minusDays(30);
+		if (toDate == null)
+			toDate = LocalDate.now();
+
+		// Lấy dữ liệu số lượng nhập và tổng giá trị nhập
+		List<Object[]> results = chiTietDonNhapHangService.getImportTrendDetail(fromDate, toDate);
+
+		List<String> labels = new ArrayList<>();
+		List<Integer> values = new ArrayList<>();
+		List<Double> totalValues = new ArrayList<>();
+
+		for (Object[] row : results) {
+			labels.add(row[0].toString()); // Ngày nhập
+			values.add(((Number) row[1]).intValue()); // Tổng số lượng nhập
+			totalValues.add(((Number) row[2]).doubleValue()); // Tổng giá trị nhập
+		}
+
+		// Dữ liệu báo cáo chi tiết
+		List<Map<String, Object>> reportData = new ArrayList<>();
+		for (Object[] row : results) {
+			Map<String, Object> reportRow = new HashMap<>();
+			reportRow.put("ngayNhap", row[0]); // Ngày nhập
+			reportRow.put("soLuongNhap", row[1]); // Tổng số lượng nhập
+			reportRow.put("tongGiaTriNhap", row[2]); // Tổng giá trị nhập
+			reportData.add(reportRow);
+		}
+
+		model.addAttribute("labels", labels);
+		model.addAttribute("values", values);
+		model.addAttribute("totalValues", totalValues);
+		model.addAttribute("fromDate", fromDate);
+		model.addAttribute("toDate", toDate);
+		model.addAttribute("reportData", reportData);
+
+		return "warehouse/import/xu-huong-nhap";
+	}
+
+	@GetMapping("/thong-ke-xuat")
+	public String getExportStatistics(
+			@RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+			@RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+			Model model) {
+
+		// Nếu fromDate và toDate không có, mặc định lấy 30 ngày gần nhất
+		if (fromDate == null) {
+			fromDate = LocalDate.now().minusDays(30);
+		}
+		if (toDate == null) {
+			toDate = LocalDate.now();
+		}
+
+		// Chuyển đổi sang LocalDateTime (từ 00:00:00 đến 23:59:59)
+		LocalDateTime fromDateTime = fromDate.atStartOfDay();
+		LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+		List<Object[]> stockStatistics = chiTietDonNhapHangService.getImportStatistics(fromDate, toDate);
+
+		List<String> stockLabels = new ArrayList<>();
+		List<Integer> stockValuesBefore = new ArrayList<>(); // Trước kiểm kê
+		List<Integer> stockValuesAfter = new ArrayList<>(); // Sau kiểm kê
+
+		// Gọi service với LocalDateTime
+		List<Object[]> results = chiTietDonHangService.getExportStatistics(fromDateTime, toDateTime);
+		List<Object[]> topProducts = chiTietDonHangService.getTopExportedProducts(fromDateTime, toDateTime);
+		List<Object[]> danhSachBaoCao = chiTietDonHangService.getBaoCaoXuatKhoChiTiet(fromDateTime, toDateTime);
+		List<Object[]> topCustomers = chiTietDonHangService.getTopCustomers(fromDateTime, toDateTime);
+		// List<Object[]> stockStatistics = sanPhamService.getStockStatistics();
+		for (Object[] row : stockStatistics) {
+			if (row.length >= 2) {
+				String tenSanPham = row[0].toString(); // Tên sản phẩm
+				int tongSoLuongNhap = ((Number) row[1]).intValue();
+
+				List<SanPham> sanPhams = sanPhamRepository.findByTenSanPhamContainingIgnoreCase(tenSanPham);
+				SanPham sanPham = sanPhams.isEmpty() ? null : sanPhams.get(0); // Lấy sản phẩm đầu tiên nếu có
+
+				if (sanPham != null) {
+					int maSanPham = sanPham.getMaSanPham();
+					int soLuongTrenKe = sanPhamService.getSoLuongTrenKe(maSanPham);
+					int deltaKiemKe = kiemKeKhoService.getDeltaKiemKe(maSanPham);
+
+					// 🔹 Tính số lượng tồn kho
+					int soLuongTonKhoBefore = tongSoLuongNhap - soLuongTrenKe;
+					int soLuongTonKhoAfter = soLuongTonKhoBefore + deltaKiemKe;
+
+					// Thêm dữ liệu vào danh sách
+					stockLabels.add(tenSanPham);
+					stockValuesBefore.add(soLuongTonKhoBefore);
+					stockValuesAfter.add(soLuongTonKhoAfter);
+				}
+			}
+		}
+
+		model.addAttribute("stockLabels", stockLabels);
+		model.addAttribute("stockValuesBefore", stockValuesBefore);
+		model.addAttribute("stockValuesAfter", stockValuesAfter);
+		model.addAttribute("labels", results.stream().map(row -> row[0].toString()).toList());
+		model.addAttribute("values", results.stream().map(row -> ((Number) row[1]).intValue()).toList());
+		model.addAttribute("fromDate", fromDate);
+		model.addAttribute("toDate", toDate);
+		model.addAttribute("danhSachBaoCao", danhSachBaoCao);
+		model.addAttribute("topCustomers", topCustomers);
+		model.addAttribute("topProducts", topProducts);
+
+		return "warehouse/import/thong-ke-xuat";
+	}
+
+	// Hiển thị danh sách đơn hàng cần xuất kho
+	@GetMapping("/pending-orders")
+	public String getPendingOrders(Model model) {
+		List<DonHang> donHangs = donHangService.getDonHangsByStatuses(List.of("Đang xử lý", "Đã xác nhận"));
+		donHangs.sort(Comparator.comparing(DonHang::getMaDonHang).reversed());
+		for (DonHang order : donHangs) {
+			if (order.getNguoiDung() != null) {
+				System.out.println("📌 Mã đơn: " + order.getMaDonHang() + " - Khách hàng: "
+						+ order.getNguoiDung().getTenNguoiDung());
+			} else {
+				System.out.println("⚠ LỖI: Đơn hàng " + order.getMaDonHang() + " không có khách hàng!");
+			}
+		}
+
+		model.addAttribute("donHangs", donHangs);
+		return "warehouse/export/pending-orders";
+	}
+
+	// Xem chi tiết đơn hàng chờ xuất kho
+	@GetMapping("/pending-orders/{maDonHang}")
+	public String viewPendingOrderDetails(@PathVariable("maDonHang") Integer maDonHang, Model model) {
+		System.out.println("📌 [Debug] Bắt đầu xem chi tiết đơn hàng chờ xuất kho - Mã đơn hàng: " + maDonHang);
+
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			model.addAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/import/pending-orders";
+		}
+		System.out.println("✅ [Success] Tìm thấy đơn hàng - Mã đơn hàng: " + donHang.getMaDonHang());
+		System.out.println("👤 [Khách hàng] " + donHang.getNguoiDung().getTenNguoiDung());
+		System.out.println("📅 [Ngày đặt hàng] " + donHang.getNgayDat());
+		System.out.println("📦 [Trạng thái] " + donHang.getTrangThaiDonHang());
+
+		for (ChiTietDonHang chiTiet : donHang.getChiTietDonHangs()) {
+			System.out.println(
+					" [Sản phẩm] " + chiTiet.getSanPham().getTenSanPham() + " | Số lượng: " + chiTiet.getSoLuong());
+		}
+		model.addAttribute("donHang", donHang);
+		if ("Đã xác nhận".equals(donHang.getTrangThaiDonHang())) {
+			List<NguoiDung> danhSachShipper = nguoiDungService.findByRole("SHIPPER").stream()
+					.filter(NguoiDung::isTrangThai).collect(Collectors.toList());
+			model.addAttribute("danhSachShipper", danhSachShipper);
+		}
+		return "warehouse/export/order-details";
+	}
+
+	// Xác nhận xuất kho
+	@PostMapping("/confirm-export/{maDonHang}")
+	public String xacNhanXuatKho(@PathVariable("maDonHang") Integer maDonHang, RedirectAttributes redirectAttributes) {
+
+		System.out.println(" [Debug] Bắt đầu xác nhận xuất kho - Mã đơn hàng: " + maDonHang);
+
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			System.out.println(" [Error] Không tìm thấy đơn hàng - Mã đơn hàng: " + maDonHang);
+
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/import/pending-orders";
+		}
+
+		// Cập nhật trạng thái đơn hàng thành "Đã xác nhận"
+		donHang.setTrangThaiDonHang("Đã xác nhận");
+		donHang.setNgayXacNhanXuatKho(LocalDateTime.now());
+		donHangService.save(donHang);
+
+		System.out.println("✅ [Success] Đơn hàng đã được xác nhận xuất kho - Mã đơn hàng: " + donHang.getMaDonHang());
+		System.out.println("🚚 [Xuất kho] Trạng thái đơn hàng cập nhật: " + donHang.getTrangThaiDonHang());
+
+		redirectAttributes.addFlashAttribute("successMessage",
+				"Xuất kho thành công! Đơn hàng đã chuyển sang trạng thái 'Đang giao hàng'.");
+		return "redirect:/warehouse/import/pending-orders/" + maDonHang;
+	}
+
+	@PostMapping("/assign-shipper/{maDonHang}")
+	public String assignShipperFromWarehouse(@PathVariable("maDonHang") Integer maDonHang,
+			@RequestParam("shipperId") Integer shipperId, RedirectAttributes redirectAttributes) {
+
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/import/pending-orders";
+		}
+
+		NguoiDung shipper = nguoiDungService.findById(shipperId);
+		if (shipper == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy shipper.");
+			return "redirect:/warehouse/pending-orders/" + maDonHang;
+		}
+
+		// Gán người xử lý (người bán) là nhân viên kho đang đăng nhập
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		NguoiDungDetails userDetails = (NguoiDungDetails) authentication.getPrincipal();
+		NguoiDung nhanVienKho = nguoiDungService.findByTenNguoiDung(userDetails.getUsername());
+		donHang.setSeller(nhanVienKho);
+
+		// Gán shipper và cập nhật trạng thái
+		donHang.setShipper(shipper);
+		donHang.setTrangThaiDonHang("Đang chuẩn bị hàng");
+
+		donHangService.capNhatTrangThai(donHang, "Đang chuẩn bị hàng");
+		donHangService.updateDonHang(donHang);
+
+		redirectAttributes.addFlashAttribute("successMessage",
+				"Gán shipper thành công. Đơn hàng chuyển sang 'Đang chuẩn bị hàng'.");
+
+		return "redirect:/warehouse/import/pending-orders";
+	}
+
+	// Hiển thị danh sách hàng đã xuất kho
+	@GetMapping("/exported-orders")
+	public String listExportedOrders(
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        @RequestParam(value = "status", required = false, defaultValue = "all") String status,
+	        Model model) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("maDonHang").descending());
+	    Page<DonHang> donHangPage;
+
+	    if (status != null && !status.equals("all")) {
+	        donHangPage = donHangService.getDonHangsByStatus(status, pageable); // dùng lại service cũ
+	    } else {
+	        donHangPage = donHangService.findDonHangsDaXuatKho(pageable); // mặc định là đã xuất kho
+	    }
+
+	    model.addAttribute("donHangPage", donHangPage);
+	    model.addAttribute("currentPage", page);
+	    model.addAttribute("totalPages", donHangPage.getTotalPages());
+	    model.addAttribute("selectedStatus", status);
+
+	    return "warehouse/export/confirmed-orders";
+	}
+
+
+	@GetMapping("/exported-order-details/{maDonHang}")
+	public String viewExportedOrderDetails(@PathVariable("maDonHang") Integer maDonHang, Model model) {
+		System.out.println("📌 [Debug] Xem chi tiết đơn hàng đã xuất - Mã đơn hàng: " + maDonHang);
+
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			model.addAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/export/exported-orders";
+		}
+
+		System.out.println("✅ [Success] Đã tìm thấy đơn hàng đã xuất - Mã đơn hàng: " + donHang.getMaDonHang());
+
+		model.addAttribute("donHang", donHang);
+		return "warehouse/export/exported-order-details";
+	}
+
+	@PostMapping("/exported-order-details/{maDonHang}/update-status")
+	public String updateExportedOrderStatus(@PathVariable("maDonHang") Integer maDonHang,
+			@RequestParam("action") String action, RedirectAttributes redirectAttributes) {
+
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/export/exported-orders";
+		}
+
+		// Xác nhận hủy do giao thất bại lần 2
+		if ("Giao hàng thất bại (Lần 2)".equals(donHang.getTrangThaiChoXacNhan()) || "xacNhanHoanHang".equals(action)) {
+			donHang.setTrangThaiDonHang("Đã hủy");
+			donHang.setTrangThaiChoXacNhan(null);
+			donHangService.updateDonHang(donHang);
+
+			redirectAttributes.addFlashAttribute("successMessage", "✅ Đã xác nhận hoàn hàng về kho.");
+			return "redirect:/warehouse/import/exported-order-details/" + maDonHang;
+		}
+
+		// Giao lại đơn hàng
+		if ("retry".equals(action)) {
+			if (donHang.getSoLanGiaoThatBai() >= 2) {
+				redirectAttributes.addFlashAttribute("errorMessage", "Không thể giao lại vì đã thất bại 2 lần.");
+				return "redirect:/warehouse/import/exported-order-details/" + maDonHang;
+			}
+
+			// Không chọn lại shipper, giữ nguyên shipper cũ
+			donHang.setTrangThaiDonHang("Đang chuẩn bị hàng");
+			donHang.setTrangThaiChoXacNhan("Chờ shipper xác nhận lại");
+
+			// Ghi lịch sử
+			String lichSu = donHang.getLichSuTrangThai() != null ? donHang.getLichSuTrangThai() : "";
+			String thoiGian = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+			lichSu += "\n" + thoiGian + " - Giao lại đơn hàng (lần " + donHang.getSoLanGiaoThatBai() + ")";
+			donHang.setLichSuTrangThai(lichSu);
+
+			donHangService.updateDonHang(donHang);
+			redirectAttributes.addFlashAttribute("successMessage", " Đơn hàng đã được chuyển sang giao lại.");
+			return "redirect:/warehouse/import/exported-order-details/" + maDonHang;
+		}
+
+		// Không hợp lệ
+		redirectAttributes.addFlashAttribute("errorMessage", "Không thể xử lý trạng thái này.");
+		return "redirect:/warehouse/import/exported-order-details/" + maDonHang;
+	}
+
+	@PostMapping("/cancel-order/{id}")
+	public String cancelOrderFromWarehouse(@PathVariable("id") Integer maDonHang,
+			@RequestParam("cancelReason") String cancelReason,
+			@RequestParam(value = "customCancelReason", required = false) String customReason,
+			RedirectAttributes redirectAttributes) {
+		DonHang donHang = donHangService.getDonHangById(maDonHang);
+		if (donHang == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng.");
+			return "redirect:/warehouse/import/pending-orders";
+		}
+
+		// Lý do thực tế (nếu chọn khác thì lấy custom)
+		String finalReason = "Khác".equals(cancelReason) ? customReason : cancelReason;
+		if (finalReason == null || finalReason.trim().isEmpty()) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng nhập lý do hủy hợp lệ.");
+			return "redirect:/warehouse/import/exported-order-details/" + maDonHang;
+		}
+
+		// Cập nhật trạng thái
+		donHang.setTrangThaiDonHang("Đã hủy");
+		donHang.setTrangThaiChoXacNhan(null);
+
+		// Ghi lý do hủy vào ghi chú (nếu có ghi chú cũ thì nối vào)
+		String ghiChuCu = donHang.getGhiChu() != null ? donHang.getGhiChu() : "";
+		donHang.setGhiChu((ghiChuCu + finalReason).trim());
+
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		NguoiDungDetails userDetails = (NguoiDungDetails) authentication.getPrincipal();
+		NguoiDung nhanVienKho = nguoiDungService.findByTenNguoiDung(userDetails.getUsername());
+		donHang.setSeller(nhanVienKho);
+
+		// Lưu lại
+		donHangService.updateDonHang(donHang);
+
+		redirectAttributes.addFlashAttribute("successMessage", "✅ Đã hủy đơn hàng thành công.");
+		return "redirect:/warehouse/import/pending-orders";
+	}
+
+}

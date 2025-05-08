@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head :: head">
+	<!-- Tiêu đề này sẽ được truyền vào fragment 'head' -->
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="admin/fragments/sidebar :: sidebar"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<!-- Header -->
+			<div th:replace="~{admin/fragments/header :: header}"></div>
+			<!-- End Header -->
+
+			<div class="container" style="background-color: #fafcff; padding: 20px; border-radius: 8px;">
+				<div class="page-inner">
+					<div class="d-flex justify-content-between align-items-center mb-4">
+						<div>
+							<h3 class="fw-bold mb-3">Chi Tiết Đơn Hàng</h3>
+							<h6 class="text-dark">Thông tin chi tiết cho đơn hàng</h6>
+						</div>
+					</div>
+					<!-- Nút Quay lại -->
+					<!-- Nút điều hướng -->
+					<div class="mt-4 d-flex gap-3">
+						<a th:href="@{/admin/orders}" class="btn btn-outline-dark px-4">🔙 Quay Lại</a>
+						<div th:if="${donHang.trangThaiDonHang == 'Đã hoàn thành'}">
+							<a th:href="@{/admin/hoadon/{maDonHang}(maDonHang=${donHang.maDonHang})}"
+								class="btn btn-primary px-4">📜 Xem Hóa Đơn</a>
+						</div>
+
+
+					</div>
+
+					<!-- Thông tin đơn hàng -->
+					<div th:if="${error}" class="alert alert-danger" role="alert">
+						<span th:text="${error}"></span>
+					</div>
+
+					<div class="row">
+						<!-- Thông Tin Đơn Hàng -->
+
+
+
+						<div class="container">
+							<!-- Thông Tin Đơn Hàng -->
+							<div class="card shadow-sm">
+								<div class="card-header bg-dark">
+									<h5 class="mb-0 text-light">Thông Tin Đơn Hàng</h5>
+								</div>
+								<div class="card-body">
+									<table class="table table-bordered">
+										<tbody>
+											<tr>
+												<th>Mã Đơn Hàng</th>
+												<td th:text="${donHang.maDonHang}"></td>
+												<th>Địa Chỉ Giao Hàng</th>
+												<td th:text="${donHang.diaChiGiaoHang}"></td>
+											</tr>
+											<tr>
+												<th>Khách Hàng</th>
+												<td
+													th:text="${donHang.nguoiDung != null and donHang.nguoiDung.soDienThoai != '0000000000' ? donHang.nguoiDung.hoTen : 'Khách vãng lai'}">
+												</td>
+												<th>Số Điện Thoại Nhận Hàng</th>
+												<td th:if="${donHang.nguoiDung.tenNguoiDung != 'Khách vãng lai'}"
+													th:text="${donHang.sdtNhanHang}"></td>
+												<td th:if="${donHang.nguoiDung.tenNguoiDung == 'Khách vãng lai'}"></td>
+
+											</tr>
+
+											<tr>
+												<th>Ngày Đặt</th>
+												<td th:text="${#temporals.format(donHang.ngayDat, 'dd/MM/yyyy HH:mm')}">
+												</td>
+												<th>Trạng Thái
+													<th:block
+														th:if="${donHang.trangThaiChoXacNhan != null and not #strings.isEmpty(donHang.trangThaiChoXacNhan)}">
+														<span
+															style="color: #e67e22; font-weight: bold; font-size: 11px;">(Chờ
+															xác nhận:
+															<span th:text="${donHang.trangThaiChoXacNhan}"></span>)
+														</span>
+													</th:block>
+
+												</th>
+
+
+												<td th:text="${donHang.trangThaiDonHang}" th:styleappend="${
+											        donHang.trangThaiDonHang == 'Đã hoàn thành' ? 'color: #28a745; font-weight: bold;' :
+											        donHang.trangThaiDonHang == 'Đang giao hàng' ? 'color: #17a2b8; font-weight: bold;' :
+											        donHang.trangThaiDonHang == 'Giao thất bại' ? 'color: #dc3545; font-weight: bold;' :
+											        donHang.trangThaiDonHang == 'Đã hủy' ? 'color: #dc3545; font-weight: bold;' :
+											        donHang.trangThaiDonHang == 'Đang xử lý' ? 'color: #ffc107; font-weight: bold;' :
+											        donHang.trangThaiDonHang == 'Đã xác nhận' ? 'color: #ff9800; font-weight: bold;' : 
+											        ''}">
+
+
+												</td>
+
+												<!-- Hiển thị trạng thái cần xác nhận ngay bên cạnh -->
+
+
+
+
+											</tr>
+											<tr
+												th:if="${donHang.trangThaiDonHang == 'Đã hủy' and not #strings.isEmpty(donHang.ghiChu)}">
+												<th>Lý do hủy đơn:</th>
+												<td colspan="3" th:text="${donHang.ghiChu}"
+													style="color: #dc3545; font-weight: bold;"></td>
+											</tr>
+
+										</tbody>
+									</table>
+									<div class="text-center mt-3">
+
+										<!-- Ẩn nút "Chi tiết đơn hàng" nếu là khách vãng lai -->
+										<!-- Ẩn nút "Chi tiết đơn hàng" nếu là khách vãng lai hoặc mua tại quầy -->
+										<th:block
+											th:if="${donHang.nguoiDung.tenNguoiDung != 'Khách vãng lai' and donHang.diaChiGiaoHang != 'Mua tại quầy KN'}">
+											<a th:href="@{/admin/orders/{maDonHang}/confirm-status(maDonHang=${donHang.maDonHang})}"
+												class="btn btn-info">
+												📋 Chi tiết đơn hàng
+											</a>
+										</th:block>
+
+
+
+
+
+									</div>
+								</div>
+							</div>
+							<div class="card shadow-sm">
+								<div class="card-body">
+									<!-- Danh sách sản phẩm -->
+									<h5 class="mt-4">Danh Sách Sản Phẩm Trong Đơn Hàng</h5>
+									<table class="table table-bordered table-hover mt-4">
+										<thead class="thead-dark">
+											<tr>
+												<th style="text-align: center;">STT</th>
+												<th style="text-align: center;">Ảnh</th>
+												<th style="text-align: center;">Tên Sản Phẩm</th>
+												<th style="text-align: center;">Số Lượng Đặt</th>
+												<!--<th style="text-align: center;">Số Lượng Trên Kệ</th>
+												<th style="text-align: center;">Số Lượng Trong Kho</th>-->
+												<th style="text-align: center;">Đơn Giá</th>
+												<th style="text-align: center;">Thành Tiền</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr th:each="chiTiet, iterStat : ${donHang.chiTietDonHangs}"
+												style="text-align: center;">
+												<td th:text="${iterStat.index + 1}"></td>
+												<td>
+													<img th:src="@{'/upload/' + ${chiTiet.sanPham.hinhAnh}}"
+														style="width: 50px; height: auto;" alt="Ảnh sản phẩm" />
+												</td>
+												<td th:text="${chiTiet.sanPham.tenSanPham}"></td>
+												<td th:text="${chiTiet.soLuong}" class="soLuong"></td>
+
+												<!-- Hiển thị số lượng trên kệ 
+												<td
+													th:text="${soLuongTrenKeMap[chiTiet.sanPham.maSanPham] != null ? soLuongTrenKeMap[chiTiet.sanPham.maSanPham] : 0}">
+												</td>-->
+
+												<!-- Hiển thị số lượng tồn kho 
+												<td
+													th:text="${soLuongTonKhoMap[chiTiet.sanPham.maSanPham] != null ? soLuongTonKhoMap[chiTiet.sanPham.maSanPham] : 0}">
+												</td>-->
+
+												<td
+													th:text="${#numbers.formatDecimal(chiTiet.giaTaiThoiDiemDat, 0, 'COMMA', 0, 'POINT')} + ' VND'">
+												</td>
+												<td th:text="${#numbers.formatDecimal(chiTiet.giaTaiThoiDiemDat * chiTiet.soLuong, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+													class="thanhTien"></td>
+											</tr>
+										</tbody>
+									</table>
+
+
+									<!-- Tổng tiền và phí vận chuyển -->
+									<div class="mt-4">
+										<div class="card-body">
+											<p><strong>Tổng Tiền (<span id="soSanPham"></span> sản phẩm):</strong> <span
+													id="tongTien"></span> VND</p>
+											<p><strong>Phí Giao Hàng:</strong> <span
+													th:text="${formattedPhiVanChuyen}"></span> VND</p>
+											<p><strong>Mã Giảm Giá:</strong> <span
+													th:text="${formattedMaGiamGia}"></span> VND</p>
+											<h5><strong>Khách Phải Trả:</strong> <span
+													th:text="${formattedTongGiaTri}"></span> VND</h5>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<script>
+								document.addEventListener("DOMContentLoaded", function () {
+									let totalAmount = 0;
+									let productCount = document.querySelectorAll(".soLuong").length;
+									document.querySelectorAll(".thanhTien").forEach(item => {
+										totalAmount += parseInt(item.innerText.replace(/\D/g, ""));
+									});
+									document.getElementById("tongTien").innerText = totalAmount.toLocaleString("vi-VN");
+									document.getElementById("soSanPham").innerText = productCount;
+
+									let shippingFee = parseInt(document.querySelector("[th\:text='${formattedPhiVanChuyen}']").innerText.replace(/\D/g, ""));
+									let totalPayable = totalAmount + shippingFee;
+									document.getElementById("tongPhaiTra").innerText = totalPayable.toLocaleString("vi-VN");
+								});
+							</script>
+
+						</div>
+
+					</div>
+
+
+				</div>
+			</div>
+
+			<!-- Footer -->
+			<div th:replace="admin/fragments/footer :: footer"></div>
+			<!-- End Footer -->
+		</div>
+	</div>
+
+	<!-- Core JS Files -->
+	<div th:replace="admin/fragments/script :: script"></div>
+	<!-- End JS -->
+</body>
+
+</html>

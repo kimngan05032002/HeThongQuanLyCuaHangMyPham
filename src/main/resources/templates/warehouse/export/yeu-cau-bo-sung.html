@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Hello, Warehouse Staff</title>
+	<link rel="icon" type="image/png" th:href="@{/fe/images/warehouse.png}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+	<style>
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background-color: #f2f2f2;
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			max-width: 1100px;
+			margin: 30px auto;
+			padding: 0px 10px;
+			border-radius: 8px;
+		}
+
+		h2 {
+			text-align: center;
+			color: #333;
+			margin-bottom: 20px;
+		}
+
+		.alert {
+			padding: 12px 20px;
+			margin-bottom: 20px;
+			border-radius: 5px;
+			font-weight: bold;
+		}
+
+		.alert-success {
+			background-color: #d4edda;
+			color: #155724;
+			border: 1px solid #c3e6cb;
+		}
+
+		.alert-danger {
+			background-color: #f8d7da;
+			color: #721c24;
+			border: 1px solid #f5c6cb;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 12px;
+			text-align: center;
+			border: 1px solid #ddd;
+		}
+
+		th {
+			background-color: azure;
+			color: black;
+			text-transform: uppercase;
+		}
+
+		tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+
+		tr:hover {
+			background-color: #f1f1f1;
+		}
+
+		.btn {
+			padding: 6px 12px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			text-decoration: none;
+			font-size: 14px;
+		}
+
+		.btn-success {
+			background-color: #28a745;
+			color: white;
+		}
+
+		.text-center {
+			text-align: center;
+		}
+
+		.header {
+			background-color: #f8f9fa;
+			padding: 10px;
+			
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 2px solid #dee2e6;
+		}
+
+		.header h2 {
+			margin: 0;
+			font-size: 20px;
+			color: #333;
+		}
+
+
+
+		.search-row {
+			display: flex;
+			justify-content: center;
+			gap: 40px;
+			margin: 20px 0;
+			flex-wrap: wrap;
+		}
+
+		.search-form {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.search-form input {
+			padding: 6px 12px;
+			border: 1px solid #ccc;
+			border-radius: 6px;
+			font-size: 14px;
+		}
+
+		.search-form button {
+			padding: 6px 14px;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-weight: bold;
+			transition: background-color 0.3s ease;
+		}
+
+		.search-form button:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="/warehouse/import/fragments/navbar :: navbar"></div>s
+	<div class="header" style="padding-left: 300px; text-align: center;">
+		<h2>Danh sách yêu cầu bổ sung hàng lên kệ</h2>
+	</div>
+	<div class="container" style="padding-left: 250px;">
+
+
+		<div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+		<div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+		<div class="search-row">
+			<!-- Tìm kiếm theo mã -->
+			<form method="get" action="/warehouse/import/yeu-cau-bo-sung" class="search-form"
+				onsubmit="return validateMaSanPhamForm()">
+				<input type="text" name="maSanPham" placeholder="Nhập mã sản phẩm" th:value="${maSanPham}">
+				<button type="submit"> Tìm mã SP</button>
+			</form>
+
+			<!-- Tìm kiếm theo tên -->
+			<form method="get" action="/warehouse/import/yeu-cau-bo-sung" class="search-form">
+				<input type="text" name="tenSanPham" placeholder="Nhập tên sản phẩm" th:value="${tenSanPham}">
+				<button type="submit"> Tìm tên SP</button>
+			</form>
+		</div>
+
+
+		<table style="width: 100%; table-layout: fixed;">
+			<thead>
+				<tr>
+					<th style="width: 5%;">Mã SP</th>
+					<th style="width: 10%;">Hình ảnh</th>
+					<th style="width: 25%;">Tên Sản Phẩm</th>
+					<th style="width: 10%;">Số lượng yêu cầu</th>
+					<th style="width: 15%;">Người yêu cầu</th>
+					<th style="width: 15%;">Thời gian yêu cầu</th>
+					<th style="width: 10%;">Trạng thái</th>
+					<th style="width: 12%;">Hành động</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:if="${pageYeuCau.content.size() == 0}">
+					<td colspan="8" class="text-center text-danger fw-bold">Không tìm thấy kết quả nào.</td>
+				</tr>
+				<tr th:each="yc : ${pageYeuCau.content}">
+					<td th:text="${yc.sanPham.maSanPham}"></td>
+					<td>
+						<img th:src="@{'/upload/' + ${yc.sanPham.hinhAnh}}" alt="Ảnh sản phẩm"
+							style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+					</td>
+					<td style="max-width: 200px; word-wrap: break-word; white-space: normal;"
+						th:text="${yc.sanPham.tenSanPham}"></td>
+					<td th:text="${yc.soLuongYeuCau}"></td>
+					<td th:text="${yc.nguoiYeuCau.hoTen}"></td>
+					<td th:text="${#temporals.format(yc.thoiGianYeuCau, 'dd/MM/yyyy HH:mm')}"></td>
+					<td>
+						<span th:if="${yc.daXuLy}" style="color: green;">Đã xử lý</span>
+						<span th:unless="${yc.daXuLy}" style="color: red;">Chưa xử lý</span>
+					</td>
+					<td>
+						<form th:if="${!yc.daXuLy}" th:action="@{'/warehouse/import/xac-nhan-yeu-cau/' + ${yc.id}}"
+							method="post">
+							<button type="submit" class="btn btn-success btn-sm">✔ Xác nhận</button>
+						</form>
+						<span th:if="${yc.daXuLy}" style="color: grey;">--</span>
+					</td>
+				</tr>
+			</tbody>
+
+		</table>
+
+
+	</div>
+	<div class="pagination" style="padding-bottom: 20px; text-align: center;">
+		<nav>
+			<ul style="list-style: none; padding: 0; display: inline-flex; gap: 10px;">
+				<li th:if="${currentPage > 0}">
+					<a th:href="@{'/warehouse/import/yeu-cau-bo-sung'(page=${currentPage - 1})}"
+						style="text-decoration: none; padding: 5px 10px; border: 1px solid #ccc; border-radius: 5px;">
+						&laquo; Trước
+					</a>
+				</li>
+
+				<li>
+					<span style="padding: 5px 10px; font-weight: bold;">
+						Trang <span th:text="${currentPage + 1}"></span>/<span th:text="${totalPages}"></span>
+					</span>
+				</li>
+
+				<li th:if="${currentPage + 1 < totalPages}">
+					<a th:href="@{'/warehouse/import/yeu-cau-bo-sung'(page=${currentPage + 1})}"
+						style="text-decoration: none; padding: 5px 10px; border: 1px solid #ccc; border-radius: 5px;">
+						Tiếp &raquo;
+					</a>
+				</li>
+			</ul>
+		</nav>
+	</div>
+
+	<script>
+		function validateMaSanPhamForm() {
+			const value = document.querySelector('input[name="maSanPham"]').value;
+			if (value && isNaN(value)) {
+				alert("❗ Vui lòng chỉ nhập số vào ô mã sản phẩm!");
+				return false;
+			}
+			return true;
+		}
+	</script>
+
+</body>
+
+</html>

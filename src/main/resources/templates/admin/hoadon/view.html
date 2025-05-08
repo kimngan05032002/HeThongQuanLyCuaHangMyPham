@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head :: head">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="admin/fragments/sidebar :: sidebar"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<!-- Header -->
+			<div th:replace="admin/fragments/header :: header"></div>
+			<!-- End Header -->
+
+			<div class="container" style="background-color: #fafcff;">
+				<div class="container">
+
+
+					<div class="d-flex justify-content-start gap-3 mt-4" style="margin: 0px 30px;">
+						<!-- Nút Quay Lại -->
+						<a th:href="@{/admin/hoadon}" class="btn btn-secondary">
+							<i class="fas fa-arrow-left"></i> Quay Lại
+						</a>
+
+						<!-- Nút Xuất PDF -->
+						<a th:href="@{/admin/hoadon/export/{id}(id=${hoaDon.maHoaDon})}" class="btn btn-danger">
+							<i class="fas fa-file-pdf"></i> Xuất PDF
+						</a>
+
+						<!-- Nút Xác Nhận Thanh Toán -->
+						<div th:if="${hoaDon.trangThaiThanhToan == 'Chưa xác nhận'}">
+							<form th:action="@{/admin/hoadon/xacnhan/{maHoaDon}(maHoaDon=${hoaDon.maHoaDon})}"
+								method="post">
+								<button type="submit" class="btn btn-success">
+									<i class="fas fa-check"></i> Xác nhận thanh toán
+								</button>
+							</form>
+						</div>
+					</div>
+
+
+
+
+
+				</div>
+
+
+
+				<div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+					<span th:text="${errorMessage}"></span>
+				</div>
+
+				<!-- Thông tin hóa đơn -->
+				<!-- Thông tin hóa đơn -->
+				<div class="details-container"
+					style="margin-left: 30px;margin-right: 30px;background-color: #ffff; border-radius: 12px; padding: 20px 40px 40px 40px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);">
+
+					<h3 class="fw-bold text-center mb-4">Chi Tiết Hóa Đơn</h3>
+
+					<!-- Hiển thị thông tin hóa đơn -->
+					<div class="details-header">
+						<div class="column">
+							<p><strong>Người Nhận:</strong>
+								<span
+									th:text="${hoaDon.soDienThoaiNhanHang != '0000000000' ? hoaDon.donHang.nguoiDung.hoTen : 'Khách vãng lai'}"></span>
+							</p>
+							<!-- 🚀 Nếu có địa chỉ giao hàng thì hiển thị "Địa Chỉ:", nếu không thì chỉ hiển thị "Mua tại quầy KN" -->
+							<p th:if="${hoaDon.diaChiGiaoHang != null}">
+								<strong>Địa Chỉ:</strong> <span th:text="${hoaDon.diaChiGiaoHang}"></span>
+							</p>
+							<p th:if="${hoaDon.diaChiGiaoHang == null}">Mua tại quầy KN</p>
+							<!-- 🚀 Nếu mua tại quầy thì ẩn số điện thoại -->
+							<p th:if="${hoaDon.tenNguoiNhan != 'Khách vãng lai'}">
+								<strong>Số Điện Thoại:</strong> <span th:text="${hoaDon.soDienThoaiNhanHang}"></span>
+							</p>
+
+
+							<!--<p><strong>Số Điện Thoại:</strong> <span th:text="${hoaDon.soDienThoaiNhanHang}"></span>
+							</p>-->
+
+							<!--	<p><strong>Trạng Thái Thanh Toán:</strong>
+									<span th:text="${formattedTrangThaiThanhToan}"
+										th:classappend="${formattedTrangThaiThanhToan == 'Đã thanh toán' ? 'text-success' : 'text-danger'}">
+									</span>
+								</p>-->
+							<p><strong>Trạng Thái Thanh Toán:</strong>
+								<span th:text="${formattedTrangThaiThanhToan}"
+									th:classappend="${formattedTrangThaiThanhToan == 'Đã thanh toán' ? 'text-success' : 'text-danger'}">
+								</span>
+								<!-- Thêm biểu tượng tương ứng với trạng thái -->
+								<i
+									th:classappend="${formattedTrangThaiThanhToan == 'Đã thanh toán' ? 'fa fa-check-circle text-success' : 'fa fa-times-circle text-danger'}"></i>
+							</p>
+
+
+						</div>
+						<div class="column">
+							<p><strong>Mã Hóa Đơn:</strong> <span th:text="${hoaDon.maHoaDon}"></span></p>
+							<p><strong>Ngày Xuất:</strong> <span th:text="${formattedNgayXuat}"></span></p>
+							<p><strong>Tổng Giá Trị Sản Phẩm:</strong>
+								<span class="fw-bold text-primary" th:text="${formattedTongGiaTriSanPham}"></span>
+							</p>
+							<p><strong>Phí Vận Chuyển:</strong>
+								<span class="fw-bold text-danger" th:text="${formattedPhiVanChuyen}"></span>
+							</p>
+							<p><strong>Tổng Giá Trị Đơn Hàng:</strong>
+								<span class="fw-bold text-success" th:text="${formattedTongGiaTriDonHang}"></span>
+							</p>
+							<p><strong>Tổng Tiền:</strong> <span th:text="${formattedTongTien}"></span></p>
+
+						</div>
+
+					</div>
+
+					<style>
+						.details-header {
+							display: flex;
+							justify-content: space-between;
+							align-items: flex-start;
+							margin-bottom: 20px;
+						}
+
+						.details-header .column {
+							width: 48%;
+						}
+					</style>
+
+					<!-- Bảng chi tiết sản phẩm trong hóa đơn -->
+					<h5 class="mt-3">Danh Sách Sản Phẩm Trong Hóa Đơn</h5>
+					<table class="table table-bordered mt-4">
+						<thead class="thead-dark">
+							<tr>
+								<th>Mã Sản Phẩm</th>
+								<th>Hình Ảnh</th>
+								<th>Tên Sản Phẩm</th>
+								<th>Số Lượng</th>
+								<th>Giá Tại Thời Điểm Đặt</th>
+								<th>Thành Tiền</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="chiTiet : ${formattedChiTietDonHang}" style="text-align: center;">
+								<td th:text="${chiTiet['maSanPham']}"></td>
+								<td>
+									<img th:src="@{'/upload/' + ${chiTiet['hinhAnh']}}"
+										style="width: 100px; height: auto;" alt="Ảnh sản phẩm" />
+								</td>
+								<td th:text="${chiTiet['tenSanPham']}"></td>
+								<td th:text="${chiTiet['soLuong']}"></td>
+								<td th:text="${chiTiet['giaTaiThoiDiemDat']}"></td>
+								<td th:text="${chiTiet['thanhTien']}"></td>
+							</tr>
+						</tbody>
+					</table>
+
+
+				</div>
+
+				<style>
+					.details-container {
+						font-family: Arial, sans-serif;
+						line-height: 1.6;
+						margin-bottom: 30px;
+					}
+
+					.details-container h3 {
+						text-align: center;
+						margin-bottom: 20px;
+					}
+
+					.details-container p {
+						margin: 10px 0;
+						padding-left: 15px;
+					}
+
+					/* Chỉnh lại căn chỉnh tiêu đề cột */
+					.details-header .column {
+						width: 48%;
+						padding-left: 10px;
+						/* Điều chỉnh khoảng cách từ viền trái */
+					}
+
+					.table th,
+					.table td {
+						text-align: center;
+					}
+
+					.table th {
+						background-color: #f1f1f1;
+						font-weight: bold;
+					}
+
+					.table td {
+						vertical-align: middle;
+					}
+				</style>
+
+
+			</div>
+		</div>
+		<!-- Footer -->
+		<div th:replace="admin/fragments/footer :: footer"></div>
+		<!-- End Footer -->
+	</div>
+	</div>
+
+	<!-- Core JS Files -->
+	<div th:replace="admin/fragments/script :: script"></div>
+	<!-- End JS -->
+</body>
+
+</html>

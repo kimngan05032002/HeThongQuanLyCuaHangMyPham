@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head :: head"></head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="admin/fragments/sidebar :: sidebar"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<!-- Header -->
+			<div th:replace="admin/fragments/header :: header"></div>
+			<!-- End Header -->
+
+			<div class="content" style="background-color: #fafcff;  padding-top: 30px; padding-bottom: 400px;">
+				<div class="p-4">
+					<div class="row p-4">
+						<div class="col-md-8">
+							<!-- Nút quay lại -->
+							<a href="/admin/orders" class="btn  btn-secondary ">⬅ Quay
+								lại</a>
+							<div class="card shadow-sm">
+
+								<div class="card-header bg-dark text-light text-center">
+									<h5>Xác Nhận Trạng Thái Đơn Hàng</h5>
+								</div>
+								<div class="card-body">
+
+
+
+
+
+
+
+									<!-- Hiển thị trạng thái chờ xác nhận -->
+									<th:block th:if="${donHang.trangThaiChoXacNhan != null}">
+										<p class=" text-center mt-3">
+											🔄 Trạng thái chờ xác nhận từ shipper:
+											<strong th:text="${donHang.trangThaiChoXacNhan}"></strong>
+										</p>
+									</th:block>
+
+									<th:block th:if="${donHang != null}">
+										<h5>Thông tin Đơn Hàng</h5>
+										<p><strong>Mã đơn hàng:</strong> <span th:text="${donHang.maDonHang}"></span>
+										</p>
+										<p><strong>Trạng thái:</strong>
+											<span th:text="${donHang.trangThaiDonHang}">
+											</span>
+
+
+										</p>
+
+										<th:block th:if="${donHang.trangThaiDonHang == 'Đã hủy'}">
+											<p class="text-danger"></p>
+
+										</th:block>
+									</th:block>
+
+									<th:block th:if="${donHang.trangThaiDonHang == 'Chờ xác nhận'}">
+										<form
+											th:action="@{/admin/orders/{maDonHang}/confirm-status(maDonHang=${donHang.maDonHang})}"
+											method="post">
+											<button type="submit" class="btn" style="background-color: transparent; 
+               color: green; 
+               border: 2px solid green; 
+               border-radius: 5px;">
+												Xác nhận đã xuất kho
+											</button>
+
+										</form>
+									</th:block>
+
+									<th:block
+										th:if="${donHang != null and donHang.ghiChu != null and not #strings.isEmpty(donHang.ghiChu)}">
+										<p class="mt-2">Lý Do Giao Hàng Thất Bại</p>
+										<div class="">
+											<ul style="list-style: none; padding-left: 0;">
+												<li th:each="reason, iterStat : ${#strings.arraySplit(donHang.ghiChu, '🛑')}"
+													th:style="'display: flex; align-items: center; margin-bottom: 2px;'">
+													<span style=" font-size: 13px; margin-right: 1px;"></span>
+													<span th:text="${reason}"></span>
+												</li>
+											</ul>
+										</div>
+									</th:block>
+
+									<!--	<th:block
+										th:if="${donHang.trangThaiDonHang == 'Đang xử lý' and donHang.nhanVienXuatKho == null}">
+										<form
+											th:action="@{/admin/orders/{maDonHang}/assign-export-staff(maDonHang=${donHang.maDonHang})}"
+											method="post">
+											<label for="handlingOption">Chọn cách xử lý:</label>
+											<select id="handlingOption" name="handlingOption" class="form-control"
+												required>
+												<option value="export">🏭 Giao từ kho (cần nhân viên xuất kho)</option>
+												<option value="shelf">🛒 Lấy hàng từ kệ</option>
+											</select>
+
+									
+											<div id="warehouseStaffSelection" style="display: none; margin-top: 10px;">
+												<label for="maNhanVienXuatKho">Chọn nhân viên xuất kho:</label>
+												<select id="maNhanVienXuatKho" name="maNhanVienXuatKho"
+													class="form-control">
+													<option value="">-- Chọn nhân viên xuất kho --</option>
+													<option th:each="nhanVien : ${danhSachNhanVienXuatKho}"
+														th:value="${nhanVien.maNguoiDung}"
+														th:text="${nhanVien.tenNguoiDung}">
+													</option>
+												</select>
+											</div>
+
+											<button type="submit" class="btn btn-warning mt-3">✔ Xác nhận</button>
+										</form>
+									</th:block>-->
+
+									<!--<script>
+										document.addEventListener("DOMContentLoaded", function () {
+											let handlingOption = document.getElementById("handlingOption");
+											let warehouseStaffSelection = document.getElementById("warehouseStaffSelection");
+
+											// ✅ Kiểm tra nếu đã chọn "export" trước đó thì hiển thị luôn
+											if (handlingOption.value === "export") {
+												warehouseStaffSelection.style.display = "block";
+											}
+
+											handlingOption.addEventListener("change", function () {
+												if (this.value === "export") {
+													warehouseStaffSelection.style.display = "block";
+												} else {
+													warehouseStaffSelection.style.display = "none";
+												}
+											});
+										});
+									</script>-->
+									<!-- Trạng thái Đang xử lý -> Xác nhận đơn hàng -->
+									<!-- Nếu đơn hàng đang xử lý, admin có thể xác nhận hoặc hủy 
+									<th:block
+										th:if="${donHang.trangThaiDonHang == 'Đang xử lý'}">
+										<form id="orderActionForm"
+											th:action="@{/admin/orders/{maDonHang}/update-status(maDonHang=${donHang.maDonHang})}"
+											method="post"
+											onsubmit="return confirm('Bạn có chắc chắn thực hiện hành động này không?');">
+
+											<label for="orderAction">Chọn hành động:</label>
+											<select id="orderAction" name="status" class="form-control" required>
+												<option value="">-- Chọn trạng thái --</option>
+												<option value="confirm">Xác nhận đơn hàng</option>
+												<option value="cancel">Hủy đơn hàng</option>
+											</select>
+
+											<button type="submit" id="confirmButton" class="btn btn-primary mt-3">
+												Xác nhận</button>
+										</form>
+									</th:block>-->
+									<th:block th:if="${donHang.trangThaiDonHang == 'Đang xử lý'}">
+										<form id="orderActionForm"
+											th:action="@{/admin/orders/{maDonHang}/update-status(maDonHang=${donHang.maDonHang})}"
+											method="post" onsubmit="return validateCancelReason();">
+
+											<label for="orderAction">Chọn hành động:</label>
+											<select id="orderAction" name="status" class="form-control" required
+												onchange="toggleCancelReason()">
+												<option value="">-- Chọn trạng thái --</option>
+												<option value="confirm">Xác nhận đơn hàng</option>
+												<option value="cancel">Hủy đơn hàng</option>
+											</select>
+
+											<!-- Dropdown chọn lý do hủy -->
+											<div id="cancelReasonDiv" style="display: none; margin-top: 10px;">
+												<label for="cancelReasonDropdown">Lý do hủy đơn hàng:</label>
+												<select id="cancelReasonDropdown" class="form-control"
+													 onchange="handleCancelReason()">
+													<option value="">-- Chọn lý do --</option>
+													<option value="Khách hàng thay đổi ý định">Khách hàng thay đổi ý
+														định</option>
+													<option value="Sản phẩm hết hàng">Sản phẩm hết hàng</option>
+													<option value="Không liên hệ được khách hàng">Không liên hệ được
+														khách hàng</option>
+													<option value="Khách hàng yêu cầu hủy">Khách hàng yêu cầu hủy
+													</option>
+													<option value="Khác">Khác (Nhập tay)</option>
+												</select>
+
+												<!-- Ô nhập lý do khi chọn 'Khác' -->
+												<textarea id="customCancelReason" class="form-control mt-2"
+													placeholder="Nhập lý do hủy đơn..."
+													style="display: none;"></textarea>
+												<input type="hidden" name="cancelReason" id="finalCancelReason" />
+
+											</div>
+
+											<button type="submit" id="confirmButton" class="btn btn-primary mt-3">
+												Xác nhận
+											</button>
+										</form>
+									</th:block>
+
+									<script>
+										function toggleCancelReason() {
+											let actionSelect = document.getElementById("orderAction");
+											let cancelReasonDiv = document.getElementById("cancelReasonDiv");
+
+											cancelReasonDiv.style.display = actionSelect.value === "cancel" ? "block" : "none";
+										}
+
+
+										function handleCancelReason() {
+											let cancelReasonDropdown = document.getElementById("cancelReasonDropdown");
+											let customCancelReason = document.getElementById("customCancelReason");
+											let finalCancelReason = document.getElementById("finalCancelReason");
+
+											if (cancelReasonDropdown.value === "Khác") {
+												customCancelReason.style.display = "block";
+												finalCancelReason.value = "";
+											} else {
+												customCancelReason.style.display = "none";
+												customCancelReason.value = "";
+												finalCancelReason.value = cancelReasonDropdown.value;
+											}
+										}
+
+										function validateCancelReason() {
+											let actionSelect = document.getElementById("orderAction");
+											let cancelReasonDropdown = document.getElementById("cancelReasonDropdown");
+											let customCancelReason = document.getElementById("customCancelReason");
+											let finalCancelReason = document.getElementById("finalCancelReason");
+
+											if (actionSelect.value === "cancel") {
+												if (cancelReasonDropdown.value === "") {
+													alert("Vui lòng chọn lý do hủy đơn hàng!");
+													return false;
+												}
+
+												if (cancelReasonDropdown.value === "Khác") {
+													if (customCancelReason.value.trim() === "") {
+														alert("Vui lòng nhập lý do hủy đơn hàng!");
+														return false;
+													} else {
+														finalCancelReason.value = customCancelReason.value.trim();
+													}
+												}
+											}
+
+											return true;
+										}
+
+									</script>
+
+
+
+									<!-- Trạng thái Đã xác nhận -> Chọn shipper -->
+									<th:block
+										th:if="${donHang.trangThaiDonHang == 'Đã xác nhận' and donHang.shipper == null}">
+										<form
+											th:action="@{/admin/orders/{maDonHang}/assign-shipper(maDonHang=${donHang.maDonHang})}"
+											method="post">
+											<label for="shipper">Chọn Shipper:</label>
+											<select id="shipper" name="shipperId" class="form-control" required>
+												<option value="">-- Chọn Shipper --</option>
+												<option th:each="shipper : ${danhSachShipper}"
+													th:value="${shipper.maNguoiDung}" th:text="${shipper.hoTen}">
+												</option>
+											</select>
+											<button type="submit" class="btn btn-primary mt-3">Gán Shipper</button>
+										</form>
+									</th:block>
+									<!-- Hiển thị hình ảnh giao hàng nếu có -->
+									<th:block
+										th:if="${donHang.hinhAnhGiaoHang != null and not #strings.isEmpty(donHang.hinhAnhGiaoHang)}">
+										<h5 class="mt-3">Hình Ảnh Giao Hàng</h5>
+										<img th:src="@{'/upload/' + ${donHang.hinhAnhGiaoHang}}"
+											alt="Hình ảnh giao hàng"
+											style="max-width: 300px; border-radius: 8px; box-shadow: 0px 0px 5px rgba(0,0,0,0.2);">
+									</th:block>
+
+
+									<!-- Hiển thị lý do giao thất bại nếu có -->
+									<!-- ❌ Hiển thị toàn bộ lịch sử lý do giao hàng thất bại -->
+									<th:block
+										th:if="${order != null and order.ghiChu != null and not #strings.isEmpty(order.ghiChu)}">
+										<h5 class="mt-3 text-danger">❌ Lý Do Giao Hàng Thất Bại</h5>
+										<div class="alert alert-warning">
+											<ul>
+												<li th:each="reason : ${#strings.arraySplit(order.ghiChu, '\n')}"
+													th:text="${#strings.trim(reason)}"></li>
+											</ul>
+										</div>
+									</th:block>
+
+
+
+
+
+
+									<!-- Nếu shipper đã được gán, hiển thị trạng thái -->
+									<div th:if="${donHang.shipper != null}">
+										<p> <strong>Đơn hàng đã được giao cho shipper: </strong>
+											<span th:text="${donHang.shipper.hoTen}"
+												class="text-success fw-bold"></span>
+										</p>
+										<p> <strong>Số điện thoại shipper:</strong>
+											<span th:text="${donHang.shipper.soDienThoai}" class="text-primary"></span>
+										</p>
+
+										<!-- Nếu trạng thái từ shipper là "Đang giao hàng", admin bấm xác nhận -->
+										<th:block th:if="${donHang.trangThaiChoXacNhan == 'Đang giao hàng'}">
+											<form
+												th:action="@{/admin/orders/{maDonHang}/confirm-status(maDonHang=${donHang.maDonHang})}"
+												method="post">
+												<button type="submit" class="btn btn" style="color: green;">
+													✅ Xác nhận trạng thái "Đang giao hàng"
+												</button>
+											</form>
+										</th:block>
+
+										<!-- Nếu trạng thái từ shipper là "Giao thất bại", admin có 2 lựa chọn -->
+										<th:block
+											th:if="${donHang.trangThaiChoXacNhan != null and #strings.contains(donHang.trangThaiChoXacNhan, 'Giao hàng thất bại (Lần 1)')}">
+											<p>🚨 Đơn hàng giao thất bại. Admin cần quyết định:</p>
+
+											<form
+												th:action="@{/admin/orders/{maDonHang}/update-status(maDonHang=${donHang.maDonHang})}"
+												method="post">
+												<label for="adminDecision">📌 Chọn hành động:</label>
+												<select id="adminDecision" name="status" class="form-control" required>
+													<option value="">-- Chọn trạng thái --</option>
+													<option value="retry">🔄 Giao lại</option>
+													<option value="cancel">❌ Hủy đơn hàng</option>
+												</select>
+												<button type="submit" id="confirmButton" class="btn mt-3"
+													style="color: green;">✅
+													Xác nhận</button>
+											</form>
+
+											<!-- Nếu chọn giao lại, admin chọn shipper -->
+											<div id="selectShipper" style="display: none; margin-top: 10px;">
+												<form
+													th:action="@{/admin/orders/{maDonHang}/assign-shipper(maDonHang=${donHang.maDonHang})}"
+													method="post">
+													<label for="shipper">📌 Chọn Shipper:</label>
+													<select id="shipper" name="shipperId" class="form-control" required>
+														<option value="">-- Chọn Shipper --</option>
+														<option th:each="shipper : ${danhSachShipper}"
+															th:value="${shipper.maNguoiDung}"
+															th:text="${shipper.tenNguoiDung + ' (ID: ' + shipper.maNguoiDung + ')'}">
+														</option>
+													</select>
+													<button type="submit" class="btn btn-warning mt-3">🚚 Xác nhận giao
+														lại</button>
+												</form>
+											</div>
+										</th:block>
+										<th:block
+											th:if="${donHang.trangThaiChoXacNhan == 'Giao hàng thất bại (Lần 2)'}">
+											<p class="text-danger fw-bold">🚨 Đơn hàng đã thất bại lần 2. Không thể giao
+												lại!</p>
+											<form
+												th:action="@{/admin/orders/{maDonHang}/update-status(maDonHang=${donHang.maDonHang})}"
+												method="post">
+
+
+												<button type="submit" name="status" value="cancel"
+													class="btn btn-danger mt-3" ;>
+													Xác nhận hủy đơn hàng
+												</button>
+											</form>
+										</th:block>
+
+
+										<script>
+											document.addEventListener("DOMContentLoaded", function () {
+												let adminDecision = document.getElementById("adminDecision");
+												let selectShipper = document.getElementById("selectShipper");
+												let confirmButton = document.getElementById("confirmButton");
+
+												if (adminDecision) {
+													adminDecision.addEventListener("change", function () {
+														if (this.value === "retry") {
+															selectShipper.style.display = "block"; // Hiện phần chọn shipper
+															confirmButton.style.display = "none"; // Ẩn nút Xác nhận
+														} else {
+															selectShipper.style.display = "none"; // Ẩn chọn shipper
+															confirmButton.style.display = "block"; // Hiện nút Xác nhận nếu không phải "Giao lại"
+														}
+													});
+												}
+											});
+										</script>
+
+
+
+
+										<!-- Nếu trạng thái từ shipper là "Giao hàng thành công", admin bấm xác nhận -->
+										<th:block th:if="${donHang.trangThaiChoXacNhan == 'Đã hoàn thành'}">
+											<form
+												th:action="@{/admin/orders/{maDonHang}/confirm-status(maDonHang=${donHang.maDonHang})}"
+												method="post">
+												<button type="submit" style="color: green;" class="btn">✅ Xác nhận hoàn
+													thành</button>
+											</form>
+										</th:block>
+									</div>
+
+
+
+
+								</div>
+							</div>
+
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+			<!-- Footer 
+			<div th:replace="admin/fragments/footer :: footer"></div>-->
+			<!-- End Footer -->
+		</div>
+	</div>
+
+	<!-- Core JS Files -->
+	<div th:replace="admin/fragments/script :: script"></div>
+	<!-- End JS -->
+</body>
+
+</html>

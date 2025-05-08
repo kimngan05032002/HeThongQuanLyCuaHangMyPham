@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Hello, Warehouse Staff</title>
+	<link rel="icon" type="image/png" th:href="@{/fe/images/warehouse.png}">
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background-color: #f4f4f4;
+		}
+
+		.header {
+			background-color: #f8f9fa;
+			padding: 15px 20px;
+			display: flex;
+			justify-content: flex-end;
+			/* Để nút nằm bên phải */
+			align-items: center;
+			border-bottom: 2px solid #dee2e6;
+			position: relative;
+		}
+
+		.header-title {
+			position: absolute;
+			left: 55%;
+			transform: translateX(-50%);
+			margin: 0;
+			font-size: 20px;
+			color: #333;
+		}
+
+
+		.container {
+			max-width: 1100px;
+			margin: 20px auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 12px;
+			text-align: center;
+			border: 1px solid #dee2e6;
+		}
+
+		th {
+			background-color: azure;
+			color: black;
+			text-transform: uppercase;
+		}
+
+		tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+
+		tr:hover {
+			background-color: #f1f1f1;
+		}
+
+		.btn-primary {
+			background-color: black;
+			color: white;
+			border: none;
+			display: block;
+			text-align: center;
+			padding: 10px;
+			font-size: 16px;
+			border-radius: 5px;
+			text-decoration: none;
+
+			transition: 0.3s;
+		}
+
+		.btn-primary:hover {
+			background-color: #333;
+		}
+
+		.status-success {
+			color: green;
+			font-weight: bold;
+		}
+
+		.status-pending {
+			color: red;
+			font-weight: bold;
+		}
+
+		.message {
+			font-size: 18px;
+			font-weight: bold;
+			color: #28a745;
+			margin-top: 20px;
+			text-align: center;
+		}
+
+		.search-form {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.search-form input {
+			padding: 6px 12px;
+			border: 1px solid #ccc;
+			border-radius: 6px;
+			font-size: 14px;
+		}
+
+		.search-form button {
+			padding: 6px 14px;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-weight: bold;
+			transition: background-color 0.3s ease;
+		}
+
+		.search-form button:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</head>
+
+<body>
+
+
+	<!-- Thanh điều hướng -->
+	<div class="header" style="padding-left: 300px; position: relative;">
+		<!-- Tiêu đề căn giữa -->
+		<h2 class="header-title">Kiểm Tra Tồn Kho</h2>
+
+		<!-- Nút gửi vẫn nằm bên phải -->
+		<div class="header-buttons">
+			<button form="kiemKeForm" class="btn btn-primary" type="submit">Gửi kiểm kê</button>
+		</div>
+	</div>
+
+	<!-- Form tìm kiếm nằm ngay dưới header -->
+	<div class="container" style="padding-left: 300px; margin-top: 30px;">
+		<div style="justify-content: center;margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
+			<form class="search-form" method="get" th:action="@{/warehouse/import/kiemke/{id}(id=${caLamViecId})}"
+				style="display: flex; gap: 10px;">
+				<input type="number" name="maSanPham" placeholder="Nhập mã sản phẩm" th:value="${maSanPham}"
+					style="padding: 6px 10px; border-radius: 5px; border: 1px solid #ccc;">
+				<button type="submit"
+					style="padding: 6px 12px; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+					Tìm mã
+				</button>
+			</form>
+
+			<form class="search-form" method="get" th:action="@{/warehouse/import/kiemke/{id}(id=${caLamViecId})}"
+				style="display: flex; gap: 10px;">
+				<input type="text" name="tenSanPham" placeholder="Nhập tên sản phẩm" th:value="${tenSanPham}"
+					style="padding: 6px 10px; border-radius: 5px; border: 1px solid #ccc;">
+				<button type="submit"
+					style="padding: 6px 12px; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+					Tìm tên
+				</button>
+			</form>
+		</div>
+	</div>
+	<div th:replace="/warehouse/import/fragments/navbar :: navbar"></div>
+	<form id="kiemKeForm" th:action="@{/warehouse/import/kiemke/save}" method="post">
+		<div class="container" style="padding-left: 300px;">
+			<input type="hidden" name="caLamViecId" th:value="${caLamViecId}">
+
+			<table>
+				<thead>
+					<tr>
+						<th style="width: 5%;">Mã SP</th>
+						<th style="width: 20%;">Hình ảnh</th>
+						<th style="width: 25%;">Tên sản phẩm</th>
+						<th style="width: 10%;">Tồn kho</th>
+						<th style="width: 15%;">Số lượng thực tế</th>
+						<th style="width: 10%;">Chênh lệch</th>
+						<th style="width: 5%;">Chọn</th>
+						<th style="width: 20%;">Lý do kiểm kê</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:if="${danhSachSanPham.isEmpty()}">
+						<td colspan="8" class="text-center text-danger fw-bold">Không tìm thấy sản phẩm nào.</td>
+					</tr>
+
+					<tr th:each="sp : ${danhSachSanPham}">
+						<td th:text="${sp.maSanPham}"></td>
+						<td>
+							<img th:src="@{'/upload/' + ${sp.hinhAnh}}" alt="Hình ảnh sản phẩm"
+								style="width: 70px; height: 70px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd; padding: 3px;">
+						</td>
+						<td th:text="${sp.tenSanPham}"></td>
+						<td th:text="${sanPhamSoLuongTonKhoMap[sp.maSanPham]}" class="tonKho"></td>
+						<td>
+							<input type="hidden" name="maSanPham" th:value="${sp.maSanPham}">
+							<input style="width: 60px;" type="number" name="soLuongThucTe" class="soLuongThucTe"
+								th:value="${soLuongThucTeMap[sp.maSanPham] != null ? soLuongThucTeMap[sp.maSanPham] : 0}"
+								required>
+						</td>
+						<td class="chenhLech">0</td>
+						<td>
+							<input type="checkbox" class="kiemKeCheckbox">
+						</td>
+						<td>
+							<select name="lyDoDieuChinh" class="lyDoDropdown" disabled required>
+								<option value="">Chọn lý do</option>
+								<option value="Hàng bị lỗi">Hàng bị lỗi</option>
+								<option value="Nhập hàng thiếu">Nhập hàng thiếu</option>
+								<option value="Nhập hàng dư">Nhập hàng dư</option>
+								<option value="Sai sót trong kiểm kê trước">Sai sót trong kiểm kê trước</option>
+								<option value="Khác">Khác (Nhập tay)</option>
+							</select>
+							<input type="text" name="lyDoNhapTay" class="lyDoNhapTay" placeholder="Nhập lý do"
+								style="display: none;">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</form>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const soLuongInputs = document.querySelectorAll(".soLuongThucTe");
+			const checkboxes = document.querySelectorAll(".kiemKeCheckbox");
+			const lyDoDropdowns = document.querySelectorAll(".lyDoDropdown");
+			const lyDoInputs = document.querySelectorAll(".lyDoNhapTay");
+
+			soLuongInputs.forEach(input => {
+				input.addEventListener("input", function () {
+					let row = this.closest("tr"); // Lấy dòng chứa input hiện tại
+					let tonKho = parseInt(row.querySelector(".tonKho").innerText.trim());
+					let soLuongMoi = parseInt(this.value);
+					let checkbox = row.querySelector(".kiemKeCheckbox");
+					let chenhLechText = row.querySelector(".chenhLech");
+
+					let chenhLech = soLuongMoi - tonKho;
+					chenhLechText.innerText = chenhLech;
+
+					if (chenhLech !== 0) {
+						checkbox.checked = true;
+						checkbox.dispatchEvent(new Event("change"));
+					} else {
+						checkbox.checked = false;
+						checkbox.dispatchEvent(new Event("change"));
+					}
+				});
+			});
+
+			checkboxes.forEach(checkbox => {
+				checkbox.addEventListener("change", function () {
+					let row = this.closest("tr");
+					let dropdown = row.querySelector(".lyDoDropdown");
+					let inputLyDo = row.querySelector(".lyDoNhapTay");
+
+					if (this.checked) {
+						dropdown.disabled = false;
+						dropdown.required = true;
+					} else {
+						dropdown.disabled = true;
+						dropdown.required = false;
+						dropdown.value = "";
+						inputLyDo.style.display = "none";
+						inputLyDo.value = "";
+					}
+				});
+			});
+
+			lyDoDropdowns.forEach(dropdown => {
+				dropdown.addEventListener("change", function () {
+					let row = this.closest("tr");
+					let inputLyDo = row.querySelector(".lyDoNhapTay");
+
+					if (this.value === "Khác") {
+						inputLyDo.style.display = "block";
+						inputLyDo.required = true;
+					} else {
+						inputLyDo.style.display = "none";
+						inputLyDo.required = false;
+						inputLyDo.value = "";
+					}
+				});
+			});
+		});
+	</script>
+
+</body>
+
+
+</html>

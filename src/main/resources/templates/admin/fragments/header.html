@@ -1,0 +1,280 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<div class="main-header" th:fragment="header" style="background-color: #fae1e1;">
+	<div class="main-header-logo">
+		<!-- Logo Header -->
+		<div class="logo-header">
+			<a th:href="@{/admin}" class="logo">
+				<img th:src="@{/assets/img/kaiadmin/logo_light.svg.png}" alt="navbar brand" class="navbar-brand"
+					height="80" width="auto" style="margin-top: 15px;" />
+			</a>
+			<div class="nav-toggle">
+				<button class="btn btn-toggle toggle-sidebar">
+					<i class="gg-menu-right"></i>
+				</button>
+				<button class="btn btn-toggle sidenav-toggler">
+					<i class="gg-menu-left"></i>
+				</button>
+			</div>
+			<button class="topbar-toggler more">
+				<i class="gg-more-vertical-alt"></i>
+			</button>
+		</div>
+		<!-- End Logo Header -->
+	</div>
+	<!-- Navbar Header -->
+	<nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+		<div class="container-fluid">
+
+			<form class="navbar-form nav-search p-0 d-flex align-items-center" th:action="${searchAction}" method="get">
+				<div class="input-group d-flex">
+
+					<!-- Trường hợp tìm kiếm cho từng trang 
+					<form th:if="${requestUri != null and requestUri.contains('/admin/orders')}"
+						th:action="@{/admin/orders}" method="get" class="d-flex">
+						<select name="status" class="form-control me-2" onchange="this.form.submit()">
+							<option value="all" th:selected="${selectedStatus == null || selectedStatus.equals('all')}">
+								Tất cả trạng thái</option>
+							<option value="Đang xử lý" th:selected="${selectedStatus == 'Đang xử lý'}">Đang xử lý
+							</option>
+							<option value="Đã xác nhận" th:selected="${selectedStatus == 'Đã xác nhận'}">Đã xác nhận
+							</option>
+							<option value="Đang giao hàng" th:selected="${selectedStatus == 'Đang giao hàng'}">Đang giao
+								hàng</option>
+							<option value="Đã hoàn thành" th:selected="${selectedStatus == 'Đã hoàn thành'}">Đã hoàn
+								thành</option>
+							<option value="Đã hủy" th:selected="${selectedStatus == 'Đã hủy'}">Đã hủy</option>
+							<option value="Bị hủy do không đủ hàng"
+								th:selected="${selectedStatus == 'Bị hủy do không đủ hàng'}">Bị hủy do không đủ hàng
+							</option>
+						</select>
+					</form>-->
+
+					<!-- Nếu URL là /admin/orders thì hiển thị dropdown chọn trạng thái -->
+					<div th:if="${requestUri != null and requestUri.contains('/admin/orders')}"
+						class="d-flex align-items-center me-2">
+						<label for="status" class="me-2 fw-bold" style="white-space: nowrap;">Lọc theo trạng thái:</label>
+						<select id="status" name="status" class="form-control" onchange="this.form.submit()">
+							<option value="all" th:selected="${selectedStatus == null || selectedStatus.equals('all')}">
+								Tất cả</option>
+							<option value="Đã xác nhận" th:selected="${selectedStatus == 'Đã xác nhận'}">Đã xác nhận
+							</option>
+							<option value="Đang xử lý" th:selected="${selectedStatus == 'Đang xử lý'}">Đang xử lý
+							</option>
+							<option value="Đang giao hàng" th:selected="${selectedStatus == 'Đang giao hàng'}">Đang giao
+								hàng</option>
+							<option value="Đã hoàn thành" th:selected="${selectedStatus == 'Đã hoàn thành'}">Đã hoàn
+								thành</option>
+							<option value="Đã hủy" th:selected="${selectedStatus == 'Đã hủy'}">Đã hủy</option>
+						</select>
+					</div>
+
+					<!-- Nếu URL là /admin/product thì hiển thị bộ lọc danh mục và tìm kiếm -->
+					<div th:if="${requestUri != null and requestUri.contains('/admin/product')}"
+						class="d-flex align-items-center me-2">
+						<select name="category" class="form-control me-2" onchange="this.form.submit()">
+							<option value="0">Tất cả danh mục</option>
+							<option th:each="danhMuc : ${listDanhMuc}" th:value="${danhMuc.maDanhMuc}"
+								th:text="${danhMuc.tenDanhMuc}"
+								th:selected="${category != null && category == danhMuc.maDanhMuc}"></option>
+						</select>
+						<input type="text" name="keyword" placeholder="Tìm kiếm..." class="form-control"
+							th:value="${keyword != null ? keyword : ''}" />
+						<button type="submit" class="btn btn-search pe-1">
+							<i class="fa fa-search search-icon"></i>
+						</button>
+					</div>
+
+
+
+
+
+
+
+
+					<!-- Nếu URL là /admin/hoadon hoặc /admin/hoadon/{maDonHang} thì hiển thị thanh tìm kiếm hóa đơn -->
+					<form th:action="@{/admin/hoadon}" method="get">
+						<div th:if="${requestUri != null and (requestUri == '/admin/hoadon' or requestUri.startsWith('/admin/hoadon/'))}"
+							class="d-flex align-items-center me-2">
+							<select name="status" class="form-control me-2" th:value="${selectedStatus}">
+								<option value="">Tất cả trạng thái</option>
+								<option value="Chưa xác nhận" th:selected="${selectedStatus == 'Chưa xác nhận'}">Chưa
+									xác
+									nhận</option>
+								<option value="Đã xác nhận" th:selected="${selectedStatus == 'Đã xác nhận'}">Đã xác nhận
+								</option>
+							</select>
+							<input type="date" name="startDate" class="form-control me-2"
+								th:value="${formattedStartDate}" />
+							<input type="date" name="endDate" class="form-control me-2"
+								th:value="${formattedEndDate}" />
+							<button type="submit" class="btn btn-search pe-1">
+								<i class="fa fa-search search-icon"></i>
+							</button>
+						</div>
+					</form>
+					<!-- Nếu là trang /admin/offline-orders, hiển thị ô tìm kiếm sản phẩm -->
+
+
+
+
+
+					<!-- Nếu URL là /admin/danhgia thì hiển thị bộ lọc số sao -->
+					<div th:if="${requestUri != null and requestUri.contains('/admin/danhgia')}"
+						class="d-flex align-items-center me-2">
+						<select name="soSao" class="form-control me-2" onchange="this.form.submit()">
+							<option value="0" th:selected="${soSao == null || soSao == 0}">Tất cả số sao</option>
+							<option value="5" th:selected="${soSao == 5}">5 Sao</option>
+							<option value="4" th:selected="${soSao == 4}">4 Sao</option>
+							<option value="3" th:selected="${soSao == 3}">3 Sao</option>
+							<option value="2" th:selected="${soSao == 2}">2 Sao</option>
+							<option value="1" th:selected="${soSao == 1}">1 Sao</option>
+						</select>
+					</div>
+
+
+
+					<!-- Nếu không phải trang /admin/orders, /admin/product, hay /admin/hoadon thì hiển thị ô tìm kiếm thông thường -->
+					<!--	<div 
+					th:unless="${requestUri != null 
+					and (requestUri.contains('/admin/orders') 
+					or requestUri.contains('/admin/product') 
+					or requestUri.contains('/admin/hoadon') 
+					or requestUri.contains('/admin/danhgia') 
+					or requestUri.contains('/admin/offline-orders'))}" class="d-flex align-items-center me-2">
+						<input type="text" name="keyword" placeholder="Tìm kiếm..." class="form-control"
+							th:value="${keyword != null ? keyword : ''}" />
+						<button type="submit" class="btn btn-search pe-1">
+							<i class="fa fa-search search-icon"></i>
+						</button>
+					</div>-->
+					<div th:unless="${requestUri != null 
+					    and (requestUri.contains('/admin/orders') 
+					        or requestUri.contains('/admin/product') 
+					        or requestUri.contains('/admin/hoadon') 
+					        or requestUri.contains('/admin/danhgia') 
+					        
+					        or requestUri.contains('/admin/inventory/kiem-ke-chenh-lech') 
+					        or requestUri.contains('/admin/inventory/kiem-ke-chi-tiet')
+					        or requestUri.contains('/admin/add-product')
+					        or requestUri.contains('/admin/add-category')
+					        or requestUri.contains('/admin/edit-brand')
+					         or requestUri.contains('/admin/add-brand')
+					      or requestUri.contains('/admin/thongke/donhang')
+					       or requestUri.contains('/admin/thongke/nhaphang')
+					       or requestUri.contains('/admin/thongke/nhaphang/tong-gia-tri')
+					       or requestUri.contains('/admin/thongke/nhaphang/xu-huong')
+					       or requestUri.contains('/admin/thongke/xuat-kho')
+					       or requestUri.contains('/admin/thongke/doanhthu-loinhuan')
+					       or requestUri.contains('/admin/thongke/sanpham-banchay')
+					       or requestUri.contains('/admin/thongke/danhgia')
+					        or requestUri.contains('/admin/thongke/trangthai-donhang')
+					        or requestUri.contains('/admin/thongke/doanhthu')
+					         or requestUri.contains('/admin/thongke/khachhang')
+					          or requestUri.contains('/admin/customers/view')
+					       or requestUri.contains('/admin/thongke/sanpham-gan-het')
+					       or requestUri.contains('/admin/edit-category')
+					        or requestUri.contains('/admin/view-product'))}" class="d-flex align-items-center me-2">
+
+
+						<input type="text" name="keyword" placeholder="Tìm kiếm..." class="form-control"
+							th:value="${keyword != null ? keyword : ''}" />
+						<button type="submit" class="btn btn-search pe-1">
+							<i class="fa fa-search search-icon"></i>
+						</button>
+					</div>
+
+				</div>
+			</form>
+
+
+
+
+
+
+			<!-- End Search Form -->
+
+			<!-- End Search Form -->
+
+			<!-- End Search Form -->
+
+
+			<ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+				<li class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none">
+					<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" th:href="@{#}" role="button"
+						aria-expanded="false" aria-haspopup="true">
+						<i class="fa fa-search"></i>
+					</a>
+					<ul class="dropdown-menu dropdown-search animated fadeIn">
+						<form class="navbar-left navbar-form nav-search">
+							<div class="input-group">
+								<input type="text" placeholder="Search ..." class="form-control" />
+							</div>
+						</form>
+					</ul>
+				</li>
+
+
+
+				<li class="nav-item topbar-user dropdown hidden-caret">
+					<a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" th:href="@{#}"
+						aria-expanded="false">
+						<div class="avatar-sm">
+							<img th:src="${user.nguoiDung.avatar != null and !#strings.isEmpty(user.nguoiDung.avatar)} ? 
+              @{/upload/{img}(img=${user.nguoiDung.avatar})} : 
+              @{/assets/img/profile.png}" alt="..." class="avatar-img rounded-circle avatar-border" />
+
+						</div>
+						<span class="profile-username">
+							<span class="op-7">Hi,</span>
+							<span class="fw-bold" th:text="${user.nguoiDung.hoTen}"></span>
+						</span>
+					</a>
+					<ul class="dropdown-menu dropdown-user animated fadeIn">
+						<div class="dropdown-user-scroll scrollbar-outer">
+							<li>
+								<div class="user-box">
+									<div class="avatar-lg">
+										<img th:src="${user.nguoiDung.avatar != null and !#strings.isEmpty(user.nguoiDung.avatar)} ? 
+              @{/upload/{img}(img=${user.nguoiDung.avatar})} : 
+              @{/assets/img/profile.png}" alt="image profile" class="avatar-img rounded" />
+
+									</div>
+									<div class="u-text">
+										<!-- Hiển thị tên người dùng -->
+										<h4 th:text="${user.nguoiDung.hoTen}"></h4>
+
+										<!-- Hiển thị email người dùng -->
+										<p class="text-muted" th:text="${user.nguoiDung.email}"></p>
+
+
+									</div>
+
+								</div>
+							</li>
+							<li>
+								<div class="dropdown-divider"></div>
+
+								<a class="dropdown-item" th:href="@{/admin/account}">Account Setting</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" th:href="@{/admin/logout}">Logout</a>
+							</li>
+						</div>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</nav>
+	<style>
+		.avatar-border {
+			border: 1px solid rgb(0, 0, 255);
+			/* màu đỏ đậm như ảnh mẫu */
+			padding: 2px;
+			/* nếu muốn thêm khoảng trắng giữa ảnh và viền */
+			box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+			/* tuỳ chọn bóng */
+		}
+	</style>
+
+	<!-- End Navbar -->
+</div>

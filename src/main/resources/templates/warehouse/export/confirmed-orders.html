@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Hello, Warehouse Staff</title>
+	<link rel="icon" type="image/png" th:href="@{/fe/images/warehouse.png}">
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+
+		.container {
+			max-width: 1100px;
+			margin: 0px auto 20px;
+			padding-top: 20px;
+			background: white;
+			border-radius: 8px;
+		}
+
+		h2 {
+			text-align: center;
+			color: #333;
+			margin-bottom: 20px;
+		}
+
+		.btn {
+			display: inline-block;
+			padding: 10px 15px;
+			text-decoration: none;
+			font-weight: bold;
+			border-radius: 5px;
+			transition: 0.3s;
+			text-align: center;
+		}
+
+		.btn-primary {
+			background-color: black;
+			color: white;
+			border: none;
+			display: block;
+			width: 200px;
+			margin: 20px auto;
+			text-align: center;
+		}
+
+		.header {
+			background-color: #f8f9fa;
+			padding: 10px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 2px solid #dee2e6;
+		}
+
+		.header-buttons {
+			display: flex;
+			gap: 10px;
+			margin-right: 20px;
+		}
+
+		.header h2 {
+			margin: 0;
+			font-size: 20px;
+			color: #333;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 12px;
+			text-align: center;
+			border: 1px solid #dee2e6;
+		}
+
+		th {
+			background-color: azure;
+			color: black;
+			text-transform: uppercase;
+		}
+
+		tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+
+		tr:hover {
+			background-color: #f1f1f1;
+		}
+
+		.action a {
+			text-decoration: none;
+			font-weight: bold;
+			padding: 5px 10px;
+			transition: 0.3s;
+		}
+	</style>
+</head>
+
+<body>
+	<div th:replace="/warehouse/import/fragments/navbar :: navbar"></div>
+	<div class="header" style="padding-left: 300px;">
+		<div class="filter-form" style="margin-bottom: 20px; padding-left: 30px;">
+			<form method="get" th:action="@{/warehouse/import/exported-orders}"
+				style="display: flex; align-items: center; gap: 10px;">
+				<label for="status" style="font-weight: 500; font-size: 16px;">Lọc theo trạng thái:</label>
+				<select id="status" name="status" onchange="this.form.submit()"
+					style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px;">
+					<option value="all" th:selected="${selectedStatus == null or selectedStatus == 'all'}">Tất cả
+					</option>
+					<option value="Đã xác nhận" th:selected="${selectedStatus == 'Đã xác nhận'}">Đã xác nhận</option>
+					<option value="Đang xử lý" th:selected="${selectedStatus == 'Đang xử lý'}">Đang xử lý</option>
+					<option value="Đang chuẩn bị hàng" th:selected="${selectedStatus == 'Đang chuẩn bị hàng'}">Đang
+						chuẩn bị hàng</option>
+					<option value="Đang giao hàng" th:selected="${selectedStatus == 'Đang giao hàng'}">Đang giao hàng
+					</option>
+					<option value="Đã hoàn thành" th:selected="${selectedStatus == 'Đã hoàn thành'}">Đã hoàn thành
+					</option>
+					<option value="Đã hủy" th:selected="${selectedStatus == 'Đã hủy'}">Đã hủy</option>
+				</select>
+			</form>
+		</div>
+
+
+		<h2 style="text-align: center; transform: translateX(-140%); font-weight: bold; margin-bottom: 20px;">
+			Danh sách đơn hàng đã xuất kho
+		</h2>
+
+	</div>
+	<div class="container" style="padding-left: 300px;">
+		<table>
+			<thead>
+				<tr>
+					<th>Mã đơn hàng</th>
+					<th>Khách hàng</th>
+					<th>Ngày xuất kho</th>
+					<th>Trạng thái</th>
+					<th>Hành động</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="donHang : ${donHangPage.content}">
+					<td th:text="${donHang.maDonHang}"></td>
+					<td th:text="${donHang.nguoiDung != null ? donHang.nguoiDung.hoTen : 'Không xác định'}"></td>
+					<td
+						th:text="${donHang.ngayXacNhanXuatKho != null ? #temporals.format(donHang.ngayXacNhanXuatKho, 'dd-MM-yyyy HH:mm') : 'Chưa cập nhật'}">
+					</td>
+					<td>
+						<span th:text="${donHang.trangThaiDonHang}"></span>
+						<br th:if="${donHang.trangThaiChoXacNhan != null}" />
+						<small th:if="${donHang.trangThaiChoXacNhan != null}"
+							th:text="'(Chờ xác nhận: ' + ${donHang.trangThaiChoXacNhan} + ')'"></small>
+					</td>
+
+					<td>
+						<a th:href="@{/warehouse/import/exported-order-details/{id}(id=${donHang.maDonHang})}"
+							class="btn btn-info">
+							Xem chi tiết
+						</a>
+					</td>
+				</tr>
+
+				<tr th:if="${donHangPage.empty}">
+					<td colspan="5"
+						style="text-align: center; padding: 15px; font-size: 16px; color: #dc3545; font-weight: bold;">
+						Không có đơn hàng nào cần xuất kho.
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<!-- Phân trang căn giữa bảng -->
+		<div style="display: flex; justify-content: center; margin-top: 20px;">
+			<div class="pagination" style="display: flex; gap: 8px;">
+				<div th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${i} == ${currentPage} ? 'active-page' : ''">
+					<a class="page-link"
+						th:href="@{/warehouse/import/exported-orders(page=${i}, status=${selectedStatus})}"
+						th:text="${i + 1}" style="border-radius: 6px;
+					  min-width: 36px;
+					  height: 36px;
+					  display: flex;
+					  align-items: center;
+					  justify-content: center;
+					  background-color: #f8f9fa;
+					  color: #007bff;
+					  border: 1px solid #dee2e6;
+					  font-weight: bold;
+					  transition: 0.3s;">
+					</a>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+
+</body>
+
+</html>

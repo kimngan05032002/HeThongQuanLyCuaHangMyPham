@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head::head">
+	<!-- Thêm link để sử dụng Chart.js -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="~{admin/fragments/sidebar::sidebar}"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel" style="background-color: #faeee7; padding-bottom: 0px;">
+			<!-- Header -->
+			<div th:replace="~{admin/fragments/header::header}"></div>
+			<!-- End Header -->
+
+			<div class="container-fluid" style="padding-top: 90px;">
+				<div class="row">
+					<div class="col-12 text-center mb-4">
+						<h3 class="fw-bold">Trang chủ</h3>
+						<h6 class="text-muted">Thông tin tổng quan của cửa hàng</h6>
+					</div>
+
+					<!-- Các thẻ card để hiển thị thông tin thống kê -->
+					<!-- Card để hiển thị tổng số khách hàng -->
+					<div class="container mt-4">
+						<h3 class="text-center">📊 Doanh Thu</h3>
+						<select id="revenueFilter" class="form-select mb-3">
+							<option value="daily">Doanh thu theo ngày</option>
+							<option value="weekly">Doanh thu theo tuần</option>
+							<option value="monthly">Doanh thu theo tháng</option>
+						</select>
+						<canvas id="revenueChart"></canvas>
+					</div>
+
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-warning">
+											<i class="fas fa-user"></i> <!-- Icon đại diện cho khách hàng -->
+										</div>
+									</div>
+									<div class="col-7">
+										<div class="numbers">
+											<p class="card-category">Tổng số khách hàng</p>
+											<p class="card-title" th:text="${totalCustomers}">0</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Card để hiển thị tổng số đơn hàng -->
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-warning">
+											<i class="fas fa-box"></i> <!-- Icon đại diện cho đơn hàng -->
+										</div>
+									</div>
+									<div class="col-7">
+										<div class="numbers">
+											<p class="card-category">Tổng số đơn hàng</p>
+											<p class="card-title" th:text="${totalOrders}">0</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Thống kê tổng số sản phẩm -->
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-success">
+											<i class="fa fa-cubes" style="color: #66BB6A;"></i>
+											<!-- Icon hiển thị cho sản phẩm -->
+										</div>
+									</div>
+									<div class="col-7 d-flex align-items-center">
+										<div class="numbers">
+											<p class="card-category">Tổng số sản phẩm</p>
+											<h4 class="card-title" th:text="${totalProducts}">0</h4>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+
+				</div>
+				<div class="row mt-4">
+					<!-- Card để hiển thị tổng số đơn hàng thành công -->
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-success">
+											<i class="fa fa-check-circle" style="color: #66BB6A;"></i>
+										</div>
+									</div>
+									<div class="col-7">
+										<div class="numbers">
+											<p class="card-category">Đơn hàng thành công</p>
+											<h4 class="card-title" th:text="${successfulOrders}">0</h4>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-warning">
+											<i class="fas fa-exclamation-circle" style="color: #FFA726;"></i>
+										</div>
+									</div>
+									<div class="col-7">
+										<div class="numbers">
+											<p class="card-category">Đơn hàng chờ xử lý</p>
+											<h4 class="card-title" th:text="${pendingOrders}">0</h4>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-3 col-md-6 col-sm-6">
+						<div class="card card-stats">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-5">
+										<div class="icon-big text-center icon-warning">
+											<i class="fas fa-exclamation-circle" style="color: #FFA726;"></i>
+											<!-- Icon cho hóa đơn chưa xác nhận -->
+										</div>
+									</div>
+									<div class="col-7">
+										<div class="numbers">
+											<p class="card-category">Hóa đơn chờ xác nhận</p>
+											<p class="card-title" th:text="${unconfirmedInvoices}">0</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+				<div class="col-lg-3 col-md-4 col-sm-6">
+					<div class="card card-stats shadow rounded-lg">
+						<div class="card-body" style="padding:0px ; margin:0px ;">
+							<div class="row align-items-center">
+								<div class="col-4">
+									<div class="icon-big text-center icon-success">
+										<i class="fas fa-dollar-sign icon-money"></i>
+										<!-- Icon đại diện cho doanh thu -->
+									</div>
+								</div>
+								<div class="col-7">
+									<div class="numbers">
+										<p class="card-category">Doanh thu</p>
+										<h3 class="text-success fw-bold"
+											th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+											</h2>
+
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<hr>
+				
+
+
+			</div>
+
+			<!-- Footer -->
+			<div th:replace="~{admin/fragments/footer::footer}"></div>
+			<!-- End Footer -->
+		</div>
+
+
+
+
+
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const ctx = document.getElementById('revenueChart').getContext('2d');
+			let revenueChart;
+
+			function fetchRevenueData(filterType) {
+				fetch('/admin/revenue-data')
+					.then(response => response.json())
+					.then(data => {
+						updateChart(data[filterType]);
+					})
+					.catch(error => console.error("Lỗi khi lấy dữ liệu doanh thu:", error));
+			}
+
+			function updateChart(revenueData) {
+				const labels = revenueData.map(item => item.date);
+				const revenues = revenueData.map(item => item.totalRevenue);
+
+				if (revenueChart) {
+					revenueChart.destroy();
+				}
+
+				revenueChart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: labels,
+						datasets: [{
+							label: 'Doanh thu (VNĐ)',
+							data: revenues,
+							borderColor: 'rgba(75, 192, 192, 1)',
+							backgroundColor: 'rgba(75, 192, 192, 0.2)',
+							borderWidth: 2,
+							pointRadius: 4,
+							pointBackgroundColor: 'rgba(75, 192, 192, 1)'
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							x: {title: {display: true, text: 'Thời gian'}},
+							y: {title: {display: true, text: 'Doanh thu (VNĐ)'}, beginAtZero: true}
+						}
+					}
+				});
+			}
+
+			document.getElementById('revenueFilter').addEventListener('change', function () {
+				fetchRevenueData(this.value);
+			});
+
+			fetchRevenueData('daily'); // Mặc định hiển thị doanh thu theo ngày
+		});
+	</script>
+
+
+	<!-- Custom Styles and Scripts -->
+	<style>
+		.card.card-stats {
+			border: none;
+			border-radius: 10px;
+			transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+		}
+
+		.card.card-stats:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+		}
+	</style>
+	<div th:replace="~{admin/fragments/script::script}"></div>
+</body>
+
+</html>

@@ -1,0 +1,285 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<div class="sidebar" th:fragment="sidebar" style="background-color: #fae1e1;">
+
+	<!--fae1e1-->
+	<div class="sidebar-logo">
+		<!-- Logo Header -->
+		<div class="logo-header" style="height: 110px; display: flex; justify-content: center; align-items: center;">
+			<a th:href="@{/admin/thongke/donhang}" class="logo">
+				<div style="text-align: center;">
+					<img th:src="@{/assets/img/kaiadmin/logo_light.svg.png}" alt="navbar brand" class="navbar-brand"
+						height="120" width="auto" style="margin-top: 15px;" />
+				</div>
+
+			</a>
+			<div class="nav-toggle">
+				<button class="btn btn-toggle toggle-sidebar">
+					<i class="gg-menu-right"></i>
+				</button>
+				<button class="btn btn-toggle sidenav-toggler">
+					<i class="gg-menu-left"></i>
+				</button>
+			</div>
+			<button class="topbar-toggler more">
+				<i class="gg-more-vertical-alt"></i>
+			</button>
+		</div>
+		<!-- End Logo Header -->
+	</div>
+	<div class="sidebar-wrapper scrollbar scrollbar-inner">
+		<div class="sidebar-content">
+			<ul class="nav nav-secondary">
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#collapseThongKe" aria-expanded="false" class="nav-link">
+						<i class="fas fa-chart-bar"></i>
+						<p>Thống Kê</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="collapseThongKe">
+						<ul class="nav nav-collapse">
+							<li><a th:href="@{/admin/thongke/donhang}"><i class="fas fa-box"></i> Thống kê đơn hàng</a>
+							</li>
+							<li><a th:href="@{/admin/thongke/sanpham-gan-het}"><i class="fas fa-truck-loading"></i>
+									Thống kê
+									nhập hàng</a></li>
+							<li><a th:href="@{/admin/thongke/doanhthu}"><i class="fas fa-user-friends"></i> Thống kê
+									nhân viên</a></li>
+							<li><a th:href="@{/admin/thongke/khachhang}"><i class="fas fa-address-book"></i> Khách hàng</a></li>
+						</ul>
+					</div>
+				</li>
+
+
+				<li class="nav-section">
+					<span class="sidebar-mini-icon">
+						<i class="fa fa-ellipsis-h"></i>
+					</span>
+					<h4 class="text-section">Các thành phần</h4>
+				</li>
+
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#collapseSanPham" aria-expanded="false" class="nav-link">
+						<i class="fas fa-table"></i>
+						<p> Quản Lý Sản Phẩm</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="collapseSanPham">
+						<ul class="nav nav-collapse">
+							<li class="nav-item">
+								<a th:href="@{/admin/category}">
+
+									<i class="fas fa-th-large"></i>
+									<p>Danh mục sản phẩm</p>
+
+								</a>
+
+							</li>
+							<li class="nav-item">
+								<a th:href="@{/admin/brand}">
+
+									<i class="fas fa-th-large"></i>
+									<p>Thương Hiệu</p>
+
+								</a>
+
+							</li>
+
+							<li class="nav-item">
+								<a th:href="@{/admin/unit}">
+									<i class="fas fa-balance-scale"></i>
+									<p>Đơn vị</p>
+
+								</a>
+
+							</li>
+							<li class="nav-item">
+								<a th:href="@{/admin/product}">
+									<i class="fas fa-box"></i>
+									<p>Sản Phẩm</p>
+
+								</a>
+
+							</li>
+							<li class="nav-item">
+								<a th:href="@{/admin/promotion}">
+									<i class="fas fa-tags"></i>
+									<p>Khuyến Mãi</p>
+
+								</a>
+
+							</li>
+						</ul>
+					</div>
+				</li>
+
+
+
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#collapseNhapHang" aria-expanded="false" class="nav-link">
+						<i class="fas fa-warehouse"></i>
+						<p> Quản Lý Nhập Hàng</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="collapseNhapHang">
+						<ul class="nav nav-collapse">
+							<li>
+								<a th:href="@{/admin/supplier}">
+									<i class="fas fa-user-tie"></i>
+									<p>Nhà cung cấp</p>
+
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/purchaseorder}">
+									<i class="fas fa-file-invoice"></i>
+
+									<p>Đơn nhập hàng</p>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/inventory}">
+									<i class="fas fa-boxes"></i>
+									<p>Quản lý tồn kho</p>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/inventory/kiem-ke-chenh-lech}">
+									<i class="fas fa-clipboard-list"></i>
+									<p>Kiểm kê chênh lệch</p>
+								</a>
+							</li>
+
+						</ul>
+					</div>
+				</li>
+
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" th:href="@{#maps}">
+						<i class="fas fa-truck"></i>
+						<p>Quản lý đơn hàng</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="maps">
+						<ul class="nav nav-collapse">
+							<li>
+
+								<a th:href="@{/admin/orders}">
+									<i class="fas fa-box"></i>
+									<p>Đơn hàng</p>
+								</a>
+								<a th:href="@{/admin/offline-orders}">
+									<i class="fas fa-shopping-cart"></i>
+									<p>Đơn hàng offline</p>
+								</a>
+								<a th:href="@{/admin/shipping-fee}">
+									<i class="fas fa-truck-loading"></i>
+									<p>Quản lý phí vận chuyển </p>
+								</a>
+							</li>
+
+						</ul>
+					</div>
+				</li>
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" th:href="@{#danhgia}">
+						<i class="fas fa-file-invoice"></i>
+						<p>Quản lý hóa đơn</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="danhgia">
+						<ul class="nav nav-collapse">
+							<li>
+								<a th:href="@{/admin/hoadon}">
+									<i class="fas fa-file-invoice"></i>
+									<p>Danh sách hóa đơn</p>
+								</a>
+							</li>
+
+						</ul>
+					</div>
+				</li>
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#charts">
+						<i class="fas fa-comment-dots"></i>
+						<p>Quản lý đánh giá</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="charts">
+						<ul class="nav nav-collapse">
+							<li>
+								<a th:href="@{/admin/danhgia}">
+									<i class="fas fa-star"></i>
+									<p>Danh sách các đánh giá</p>
+
+								</a>
+							</li>
+						</ul>
+					</div>
+				</li>
+				<!--
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#khachhang">
+						<i class="far fa-user"></i> 
+						<p>Khách Hàng</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="khachhang">
+						<ul class="nav nav-collapse">
+							<li>
+								<a th:href="@{/admin/loai-khach-hang}">
+									<i class="fas fa-users"></i>
+									<p>Danh sách loại khách hàng</p>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</li>-->
+
+				<li class="nav-item">
+					<a data-bs-toggle="collapse" href="#nguoiDungMenu">
+						<i class="fas fa-users"></i>
+						<p>Quản lý người dùng</p>
+						<span class="caret"></span>
+					</a>
+					<div class="collapse" id="nguoiDungMenu">
+						<ul class="nav nav-collapse">
+							<li>
+								<a th:href="@{/admin/shipper}" class="nav-link">
+									<i class="fas fa-shipping-fast"></i>
+									<p>Quản lý nhân viên giao hàng</p>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/warehouse-staff}" class="nav-link">
+									<i class="fas fa-warehouse"></i>
+									<p>Quản lý nhân viên kho</p>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/sales-staff}" class="nav-link">
+									<i class="fas fa-user-cog"></i>
+									<p>Quản lý nhân viên bán hàng</p>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/admin/customers}" class="nav-link">
+									<i class="fa fa-user-tag"></i>
+									<p>Quản lý khách hàng</p>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</li>
+
+
+
+
+
+
+
+			</ul>
+		</div>
+	</div>
+
+</div>

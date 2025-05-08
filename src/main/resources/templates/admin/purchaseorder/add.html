@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="admin/fragments/head :: head"></head>
+
+<body style="background: #fafcff; font-family: 'Arial', sans-serif;">
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div th:replace="admin/fragments/sidebar::sidebar"></div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<!-- Header -->
+			<div th:replace="admin/fragments/header :: header"></div>
+			<!-- End Header -->
+
+			<!-- Main Content -->
+			<div
+				style="margin-left: 200px;align-items: center; max-width: 600px; margin-top: 100px; background-color: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);">
+
+
+				<div
+					style="background-color: #fafcff; border-radius: 8px; padding: 10px 20px; margin-bottom: 20px; text-align: center;">
+					<h3 style="margin: 0; font-size: 1.8rem; color: #333; font-weight: bold;">Thêm Chi Tiết Đơn Nhập
+						Hàng</h3>
+				</div>
+				<form th:action="@{/admin/save-purchase-order}" method="post">
+					<!-- Nhà cung cấp -->
+					<div style="margin-bottom: 20px;">
+						<label for="provider"
+							style="font-weight: bold; font-size: 1rem; margin-bottom: 8px; display: block; color: #555;">Chọn
+							nhà cung cấp:</label>
+						<select name="maNhaCungCap" id="provider" required
+							style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; background-color: #fff; color: #333;">
+							<option th:each="provider : ${providers}" th:value="${provider.maNhaCungCap}"
+								th:text="${provider.tenNhaCungCap}"></option>
+						</select>
+					</div>
+
+					<!-- Ngày nhập hàng -->
+					<div style="margin-bottom: 20px;">
+						<label for="ngayNhapHang"
+							style="font-weight: bold; font-size: 1rem; margin-bottom: 8px; display: block; color: #555;">Ngày
+							nhập hàng:</label>
+						<input type="date" name="ngayNhapHang" id="ngayNhapHang" required
+							style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; background-color: #fff; color: #333;">
+					</div>
+					<!-- Thông báo lỗi -->
+					<div th:if="${errorMessage}" th:text="${errorMessage}"
+						style="color: red; font-weight: bold; margin-top: 10px;"></div>
+
+					<!-- Nút lưu -->
+					<div style="margin-bottom: 20px;">
+						<button type="submit"
+							style="width: 100%; padding: 12px; background-color: #4a90e2; color: #fff; font-weight: bold; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: all 0.3s ease;"
+							onmouseover="this.style.backgroundColor='#357ab8';"
+							onmouseout="this.style.backgroundColor='#4a90e2';">
+							Lưu đơn nhập hàng
+						</button>
+					</div>
+
+
+				</form>
+			</div>
+		</div>
+	</div>
+	<div th:replace="admin/fragments/footer::footer"></div>
+	<!-- Core JS Files -->
+	<div th:replace="admin/fragments/script::script"></div>
+	<!-- End JS -->
+</body>
+
+
+
+</html>

@@ -1,0 +1,590 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<section class="py-5" th:fragment="product">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="bootstrap-tabs product-tabs">
+					<div th:if="${sanPhamsSapKhuyenMai != null and !sanPhamsSapKhuyenMai.isEmpty()}"
+						class="tabs-header d-flex justify-content-between border-bottom my-5">
+						<h3 style="color: #007bff; text-align: center; width: 100%;">🕓 Sản phẩm sắp khuyến mãi</h3>
+					</div>
+
+					<div class="mb-5" style="padding:0px 80px;">
+						<div class="product-grid"
+							style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start;">
+							<!-- Lặp qua sản phẩm sắp khuyến mãi -->
+							<div class="product-item" th:each="sp : ${sanPhamsSapKhuyenMai}" style="
+				width: calc(20% - 15px); 
+				min-height: 350px; 
+				padding: 0px; 
+				display: flex; 
+				flex-direction: column; 
+				justify-content: space-between; 
+				transition: transform 0.2s ease, box-shadow 0.3s ease; 
+				border-radius: 10px; 
+				background-color: #fff;" onmouseover="this.style.borderColor='#ffc107';"
+								onmouseout="this.style.borderColor='#ddd';">
+
+								<div>
+									<!-- Container sản phẩm -->
+									<div class="product-item"
+										style="position: relative; margin:0px; padding-bottom: 0px;">
+										<!-- BÊN PHẢI: Giảm %, Từ ngày -->
+
+										<div th:if="${sanPhamSapKhuyenMaiMap[sp.maSanPham] != null}"
+											style="display: flex; justify-content: flex-start; font-size: 11px;">
+											<span style="
+										        background-color: #ff4d4d;
+										        color: white;
+										        font-weight: bold;
+										        padding: 2px 6px;
+										        border-radius: 4px;
+										        ">
+												<span
+													th:text="'-' + ${sanPhamSapKhuyenMaiMap[sp.maSanPham].phanTramGiamGia} + '%'"></span>
+											</span>
+										</div>
+
+										<!-- Hình ảnh sản phẩm -->
+										<figure th:if="${sp != null}">
+											<a th:href="@{'/product/' + ${sp.maSanPham}}" th:title="${sp.tenSanPham}">
+												<img th:src="@{'/upload/' + ${sp.hinhAnh}}" class="tab-image"
+													style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; display: block;"
+													alt="Sản phẩm">
+											</a>
+										</figure>
+
+										<div class="product-pricing"
+											style="display: flex; justify-content: space-between; align-items: flex-start;">
+
+											<!-- BÊN TRÁI: Giá gốc + Giá sau giảm -->
+											<div
+												style="display: flex; flex-direction: column; align-items: flex-start;">
+
+												<!-- Giá gốc (gạch ngang, nhỏ hơn) -->
+												<div style="font-size: 12px; color: #999; text-decoration: line-through;"
+													th:if="${sanPhamSapKhuyenMaiMap[sp.maSanPham] != null}">
+													<span
+														th:text="${#numbers.formatDecimal(sp.donGiaBan, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+												</div>
+
+												<!-- Giá sau giảm (to, đỏ) -->
+												<div style="font-size: 14px; font-weight: bold; color: #e74c3c;"
+													th:if="${sanPhamSapKhuyenMaiMap[sp.maSanPham] != null}">
+													<span
+														th:text="${#numbers.formatDecimal(sp.donGiaBan.subtract(sp.donGiaBan.multiply(sanPhamSapKhuyenMaiMap[sp.maSanPham].phanTramGiamGia).divide(100)), 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+												</div>
+											</div>
+
+											<!-- BÊN PHẢI: Giảm %, Từ ngày -->
+											<div th:if="${sanPhamSapKhuyenMaiMap[sp.maSanPham] != null}"
+												style="display: flex; flex-direction: column; align-items: flex-end; font-size: 11px;">
+												<!--	<span style="color: #ff5722; font-weight: bold;"
+													th:text="'Giảm ' + ${sanPhamSapKhuyenMaiMap[sp.maSanPham].phanTramGiamGia} + '%'"></span>-->
+												<span style="color: #007bff; font-weight: bold;"
+													th:text="'Từ: ' + ${#dates.format(sanPhamSapKhuyenMaiMap[sp.maSanPham].ngayBatDau, 'dd/MM/yyyy')}"></span>
+											</div>
+										</div>
+
+
+
+										<!-- Thương hiệu -->
+										<p class="product-brand" th:text="${sanPhamThuongHieuMap[sp.maSanPham]}"
+											style="font-size: 12px; color: green; font-weight: bold; margin-bottom: 0px;">
+										</p>
+
+										<!-- Tên sản phẩm -->
+										<p class="product-title" th:text="${sp.tenSanPham}"
+											style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+										</p>
+
+										<!-- Đánh giá -->
+										<div class="product-rating"
+											style="color: #f1c40f; font-size: 14px; margin-top: 2px;">
+											<span th:text="${sanPhamAverageRatingMap[sp.maSanPham] != null 
+                ? #numbers.formatDecimal(sanPhamAverageRatingMap[sp.maSanPham], 1, 1) + ' ★' 
+                : 'Chưa có đánh giá'}"></span>
+										</div>
+
+										<!-- Số lượng tồn -->
+										<span class="remaining-quantity"
+											style="font-size: 12px; color: #555; display: block; margin-top: 5px;">
+											Số lượng: <span th:text="${sanPhamSoLuongTonKhoMap[sp.maSanPham]}"
+												style="font-size: 12px;">0</span>
+											<span class="qty" th:text="${sp.donViTinh.tenDonVi}"
+												style="font-size: 11px;">Đơn vị</span>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+				<div class="bootstrap-tabs product-tabs">
+					<div class="tabs-header d-flex justify-content-between border-bottom my-5">
+						<h3 style="color: #dc3545; text-align: center; width: 100%;">🔥 Sản phẩm đang khuyến mãi</h3>
+					</div>
+
+					<div class="mb-5" style="padding:0px 80px;">
+						<div class="product-grid"
+							style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start;">
+							<!-- Lặp qua sản phẩm khuyến mãi -->
+							<div class="product-item" th:each="sp : ${sanPhamsKhuyenMai}" style="
+			width: calc(20% - 15px); 
+			min-height: 350px; 
+			padding: 0px; 
+			display: flex; 
+			flex-direction: column; 
+			justify-content: space-between; 
+			transition: transform 0.2s ease, box-shadow 0.3s ease; 
+			border-radius: 10px; 
+			background-color: #fff; 
+			" onmouseover="this.style.borderColor='#ffc107';" onmouseout="this.style.borderColor='#ddd';">
+								<div>
+									<!-- Container sản phẩm -->
+									<div class="product-item"
+										style="position: relative; margin:0px; padding-bottom: 0px;">
+										<!-- Phần trăm giảm giá -->
+										<span th:if="${sanPhamKhuyenMaiMap[sp.maSanPham] != null}"
+											th:text="'-' + ${sanPhamKhuyenMaiMap[sp.maSanPham].phanTramGiamGia} + '%'"
+											style="background: #ff4d4f; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; font-weight: bold;">
+										</span>
+										<!-- Hình ảnh sản phẩm -->
+										<figure th:if="${sp != null}">
+											<a th:href="@{'/product/' + ${sp.maSanPham}}" th:title="${sp.tenSanPham}">
+												<img th:src="@{'/upload/' + ${sp.hinhAnh}}" class="tab-image"
+													style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; display: block;"
+													alt="Sản phẩm">
+											</a>
+										</figure>
+
+										<!-- Giá và giảm giá -->
+										<div class="product-pricing"
+											style="display: flex; align-items: center; gap: 13px; justify-content: space-between;">
+											<div class="product-price"
+												style="font-size: 14px; font-weight: bold; color: #e74c3c;">
+												<span
+													th:text="${sanPhamGiaSauGiamMap[sp.maSanPham] != null ? #numbers.formatDecimal(sanPhamGiaSauGiamMap[sp.maSanPham], 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}"></span>
+											</div>
+
+											<div style="display: flex; align-items: center; gap: 5px;">
+												<div th:if="${sanPhamKhuyenMaiMap[sp.maSanPham] != null}"
+													style="font-size: 10px; color: #999; text-decoration: line-through; text-align: right;">
+													<span
+														th:text="${#numbers.formatDecimal(sp.donGiaBan, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+												</div>
+
+												<!-- Phần trăm giảm giá 
+												<span th:if="${sanPhamKhuyenMaiMap[sp.maSanPham] != null}"
+													th:text="'-' + ${sanPhamKhuyenMaiMap[sp.maSanPham].phanTramGiamGia} + '%'"
+													style="background: #ff4d4f; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; font-weight: bold;">
+												</span>-->
+											</div>
+										</div>
+
+										<!-- Thương hiệu -->
+										<p class="product-brand" th:text="${sanPhamThuongHieuMap[sp.maSanPham]}"
+											style="font-size: 12px; color: green; font-weight: bold; margin-bottom: 0px;">
+										</p>
+
+										<!-- Tên sản phẩm -->
+										<p class="product-title" th:text="${sp.tenSanPham}"
+											style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+										</p>
+
+										<!-- Đánh giá -->
+										<div class="product-rating"
+											style="color: #f1c40f; font-size: 14px; margin-top: 2px;">
+											<span th:text="${sanPhamAverageRatingMap[sp.maSanPham] != null 
+                ? #numbers.formatDecimal(sanPhamAverageRatingMap[sp.maSanPham], 1, 1) + ' ★' 
+                : 'Chưa có đánh giá'}"></span>
+										</div>
+
+										<!-- Số lượng tồn -->
+										<span class="remaining-quantity"
+											style="font-size: 12px; color: #555; display: block; margin-top: 5px;">
+											Số lượng: <span th:text="${sanPhamSoLuongTonKhoMap[sp.maSanPham]}"
+												style="font-size: 12px;">0</span>
+											<span class="qty" th:text="${sp.donViTinh.tenDonVi}"
+												style="font-size: 11px;">Đơn vị</span>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="tabs-header d-flex justify-content-between border-bottom my-5">
+						<h3 style=" text-align: center; width: 100%;"> Tất Cả Sản phẩm</h3>
+					</div>
+
+					<div class="" id="" style="padding:0px 80px;">
+						<!-- Hiển thị tất cả sản phẩm -->
+						<div class="tab-pane fade show active" id="nav-all" role="tabpanel"
+							aria-labelledby="nav-all-tab">
+							<div class="product-grid"
+								style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: flex-start;">
+								<!-- Lặp qua tất cả các sản phẩm và hiển thị -->
+								<div class="product-item" th:each="sanPham : ${sanPhams}" style="
+								
+									width: calc(20% - 15px); 
+						            min-height: 350px; 
+						            padding: 0px; 
+						            display: flex; 
+						            flex-direction: column; 
+						            justify-content: space-between; 
+						            transition: transform 0.2s ease, box-shadow 0.3s ease; 
+						            border-radius: 10px; 
+						            background-color: #fff; 
+						            " onmouseover="this.style.borderColor='#ffc107';" onmouseout="this.style.borderColor='#ddd';">
+									<div>
+										<!-- Container sản phẩm -->
+										<div class="product-item"
+											style="position: relative; margin:0px; padding-bottom: 0px;">
+											<div>
+
+
+												<div class="product-pricing"
+													style="display: flex; align-items: center; gap: 13px; justify-content: space-between;">
+
+
+
+													<div style="display: flex; align-items: center; gap: 5px;">
+
+
+
+														<!-- Phần trăm giảm giá -->
+														<span th:if="${sanPhamKhuyenMaiMap[sanPham.maSanPham] != null}"
+															th:text="'-' + ${sanPhamKhuyenMaiMap[sanPham.maSanPham].phanTramGiamGia} + '%'"
+															style="background: #ff4d4f; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; font-weight: bold;">
+														</span>
+													</div>
+												</div>
+
+
+
+											</div>
+
+											<!-- Nút yêu thích dành cho người chưa đăng nhập 
+											<a href="javascript:void(0);" class="btn-wishlist"
+												th:if="${#authentication.name == 'anonymousUser'}"
+												data-bs-toggle="offcanvas" data-bs-target="#offcanvasLoginAlert">
+												<svg width="24" height="24">
+													<use xlink:href="#heart"></use>
+												</svg>
+											</a>-->
+											<!-- Nút yêu thích dành cho người đã đăng nhập 
+											<a href="javascript:void(0);"
+												th:onclick="'toggleFavorite(' + ${sanPham.maSanPham} + ')'"
+												th:if="${#authentication.name != 'anonymousUser'}"
+												th:classappend="${favoriteProductIds.contains(sanPham.maSanPham) ? ' btn-wishlist-liked' : ' btn-wishlist'}"
+												th:id="'favorite-' + ${sanPham.maSanPham}"
+												th:data-liked="${favoriteProductIds.contains(sanPham.maSanPham)}"
+												class="btn-wishlist">
+												<svg class="heart-icon" width="24" height="24">
+													<use xlink:href="#heart"></use>
+												</svg>
+											</a>
+											<style>
+												.btn-wishlist,
+												.btn-wishlist-liked {
+													width: 40px !important;
+													height: 40px !important;
+													border-radius: 50% !important;
+													display: flex !important;
+													align-items: center !important;
+													justify-content: center !important;
+													transition: background-color 0.3s ease, color 0.3s ease !important;
+													position: absolute !important;
+													
+													top: 10px !important;
+													
+													right: 10px !important;
+													
+													z-index: 10 !important;
+													background-color: transparent !important;
+													color: black !important;
+													border: 2px solid #ccc !important;
+													
+												}
+
+												.btn-wishlist-liked {
+													background-color: red !important;
+													color: white !important;
+												}
+											</style>-->
+
+											<!-- Hình ảnh sản phẩm -->
+											<figure th:if="${sanPham != null}">
+												<a th:href="@{'/product/' + ${sanPham.maSanPham}}"
+													th:title="${sanPham.tenSanPham}">
+													<img th:src="@{'/upload/' + ${sanPham.hinhAnh}}" class="tab-image"
+														style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; display: block;"
+														alt="Sản phẩm">
+												</a>
+											</figure>
+											<!-- Hiển thị giá -->
+											<div>
+
+
+												<div class="product-pricing"
+													style="display: flex; align-items: center; gap: 13px; justify-content: space-between;">
+
+													<!--<div class="product-price"
+														style="font-size: 14px; font-weight: bold; color: #e74c3c;"
+														th:text="${sanPhamGiaSauGiamMap[sanPham.maSanPham]} + ' đ'">
+													</div>-->
+													<div class="product-price"
+														style="font-size: 14px; font-weight: bold; color: #e74c3c;">
+														<span
+															th:text="${sanPhamGiaSauGiamMap[sanPham.maSanPham] != null ? #numbers.formatDecimal(sanPhamGiaSauGiamMap[sanPham.maSanPham], 0, 'COMMA', 0, 'POINT') + ' đ' : 'Đang cập nhật'}"></span>
+													</div>
+
+													<div style="display: flex; align-items: center; gap: 5px;">
+														<!-- Giá cũ -->
+														<!--<div th:if="${sanPhamKhuyenMaiMap[sanPham.maSanPham] != null}"
+															style="font-size: 10px; color: #999; text-decoration: line-through; text-align: right;"
+															th:text="${sanPham.donGiaBan} + ' đ'">
+														</div>-->
+														<div th:if="${sanPhamKhuyenMaiMap[sanPham.maSanPham] != null}"
+															style="font-size: 10px; color: #999; text-decoration: line-through; text-align: right;">
+															<span
+																th:text="${#numbers.formatDecimal(sanPham.donGiaBan, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+														</div>
+
+
+														<!-- Phần trăm giảm giá 
+														<span th:if="${sanPhamKhuyenMaiMap[sanPham.maSanPham] != null}"
+															th:text="'-' + ${sanPhamKhuyenMaiMap[sanPham.maSanPham].phanTramGiamGia} + '%'"
+															style="background: #ff4d4f; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; font-weight: bold;">
+														</span>-->
+													</div>
+												</div>
+
+
+
+											</div>
+											<p class="product-brand"
+												th:text="${sanPhamThuongHieuMap[sanPham.maSanPham]}"
+												style="font-size: 12px; color: green; font-weight: bold; margin-bottom: 0px;">
+											</p>
+
+											<!-- Tên sản phẩm -->
+											<p class="product-title" th:text="${sanPham.tenSanPham}"
+												style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+											</p>
+
+											<!-- Đánh giá -->
+											<div class="product-rating"
+												style="color: #f1c40f; font-size: 14px; margin-top: 2px;">
+												<span th:text="${sanPhamAverageRatingMap[sanPham.maSanPham] != null 
+              ? #numbers.formatDecimal(sanPhamAverageRatingMap[sanPham.maSanPham], 1, 1) + ' ★' 
+              : 'Chưa có đánh giá'}"></span>
+
+											</div>
+											<!-- Thêm thông tin số lượng còn lại -->
+											<span class="remaining-quantity"
+												style="font-size: 12px; color: #555; display: block; margin-top: 5px;">
+												Số lượng: <span th:text="${sanPhamSoLuongTonKhoMap[sanPham.maSanPham]}"
+													style="font-size: 12px;">0</span>
+												<span class="qty" th:text="${sanPham.donViTinh.tenDonVi}"
+													style="font-size: 11px;">Đơn vị
+													tính</span>
+											</span>
+
+											<!-- Số lượng sản phẩm và nút thêm vào giỏ hàng 
+
+											<div class="product-quantity-container d-flex justify-content-center align-items-center mt-3"
+												style="gap: 10px;
+												margin-top: auto;
+												display: flex;
+										        align-items: center;
+										        justify-content: center;
+										        gap: 10px;
+											
+												">
+												<form th:action="@{/customer/cart/add}" method="post"
+													class="d-flex align-items-center">-->
+											<!-- Ô nhập số lượng 
+													<input type="number" name="quantity" value="1" min="1"
+														class="form-control quantity-input"
+														style="width: 80px; border: 2px solid #000; text-align: center;"
+														th:id="'quantity_' + ${sanPham.maSanPham}"
+														th:data-product-id="${sanPham.maSanPham}" />-->
+
+											<!-- Ẩn mã sản phẩm trong input hidden để gửi lên server 
+													<input type="hidden" name="productId"
+														th:value="${sanPham.maSanPham}" />
+													<button
+														class="btn btn-warning add-to-cart d-flex align-items-center justify-content-center"
+														style="
+														background-color: #fca503; 
+														color: #fff; 
+														border: none; 
+														
+														transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='#e68a00';"
+														onmouseout="this.style.backgroundColor='#fca503';"
+														th:if="${#authentication.name == 'anonymousUser'}"
+														data-bs-toggle="offcanvas"
+														data-bs-target="#offcanvasLoginAlert">
+														<span class="iconify" data-icon="uil:shopping-cart"
+															data-inline="false"
+															style="font-size: 1.5rem; margin-right: 5px;"></span>
+													</button>-->
+
+											<!-- Nút thêm vào giỏ hàng khi người dùng đã đăng nhập 
+													<button type="submit"
+														class="btn btn-warning add-to-cart d-flex align-items-center justify-content-center"
+														style="background-color: #fca503; color: #fff; border: none; transition: background-color 0.3s ease;"
+														onmouseover="this.style.backgroundColor='#e68a00';"
+														onmouseout="this.style.backgroundColor='#fca503';"
+														th:if="${#authentication.name != 'anonymousUser'}"
+														th:data-product-id="${sanPham.maSanPham}">
+														<span class="iconify" data-icon="uil:shopping-cart"
+															data-inline="false"
+															style="font-size: 1.5rem; margin-right: 5px;"></span>
+													</button>-->
+
+
+											<!-- Nút thêm vào giỏ hàng -->
+
+											</form>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+
+
+
+					</div>
+
+
+
+
+				</div>
+
+				<!-- Phân trang -->
+				<div
+					style="display: flex; justify-content: center; align-items: center; margin-top: 20px; gap: 10px; font-family: Arial, sans-serif;">
+					<a th:href="@{/index(page=${currentPage - 1}, size=${size})}" th:if="${currentPage > 0}"
+						style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9; text-decoration: none; color: #333; font-size: 14px; transition: all 0.3s ease;">
+						Trước
+					</a>
+					<span style="font-size: 14px; color: #555;"
+						th:text="'Trang ' + (${currentPage} + 1) + ' / ' + ${totalPages}"></span>
+					<a th:href="@{/index(page=${currentPage + 1}, size=${size})}"
+						th:if="${currentPage < totalPages - 1}"
+						style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9; text-decoration: none; color: #333; font-size: 14px; transition: all 0.3s ease;">
+						Sau
+					</a>
+				</div>
+
+
+
+
+
+			</div>
+		</div>
+	</div>
+	</div>
+
+</section>
+
+
+
+
+
+
+<style>
+	/* Định dạng chung cho nút yêu thích */
+	/* CSS cho nút yêu thích - Giữ vị trí cố định */
+
+
+	.price {
+		font-size: 10px;
+		/* Kích thước mặc định cho giá */
+		font-weight: bold;
+		color: black;
+		/* Màu đen cho giá chính */
+	}
+
+	.text-danger {
+		font-size: 15px;
+		/* Kích thước lớn hơn cho giá đã giảm */
+		font-weight: bold;
+		color: black;
+		/* Đổi lại màu đen cho giá sau giảm */
+	}
+
+	.text-muted {
+		font-size: 6px;
+		/* Kích thước nhỏ hơn cho giá gốc */
+		color: red;
+		/* Màu đỏ cho giá gốc */
+		text-decoration: line-through;
+		/* Gạch ngang cho giá gốc */
+		display: block;
+		margin-bottom: 5px;
+		/* Khoảng cách giữa giá gốc và giá sau khi giảm */
+	}
+
+
+	/* CSS để đảm bảo các khung sản phẩm đồng đều */
+	.product-item {
+		margin: 0px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+		/* Đảm bảo khung sản phẩm bao phủ toàn bộ chiều cao */
+		border: 1px solid #ddd;
+		padding: 10px;
+		box-sizing: border-box;
+		border-radius: 10px;
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+
+	.product-item figure {
+		flex-grow: 1;
+		/* Giúp phần hình ảnh sản phẩm mở rộng */
+		text-align: center;
+	}
+
+	.product-item h3 {
+		margin: 10px 0;
+		font-size: 1.2rem;
+		line-height: 1.4;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		/* Giới hạn hiển thị tên sản phẩm tối đa 2 dòng */
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		/* Thêm dấu ba chấm nếu tên sản phẩm quá dài */
+	}
+
+	.qty,
+	.price {
+		margin-bottom: 10px;
+	}
+
+	.product-grid .col {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 20px;
+	}
+
+	.product-item .d-flex {
+		justify-content: space-between;
+		align-items: center;
+		margin-top: auto;
+		/* Đẩy phần cuối cùng xuống dưới cùng */
+	}
+</style>
+
+</html>
